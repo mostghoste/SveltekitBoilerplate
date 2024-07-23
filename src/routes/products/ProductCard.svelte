@@ -1,5 +1,9 @@
 <script>
 	export let Product;
+	import { cart } from '../stores/cart';
+
+	// Helper function from the cart store
+	const { addToCart } = cart;
 </script>
 
 {#if Product}
@@ -17,7 +21,12 @@
 			<p class="font-bold">
 				Price: <span class="font-normal text-2xl">{Product.price.toFixed(2)}€</span>
 			</p>
-			<button class="btn btn-success rounded-btn">Add to cart</button>
+			<button
+				on:click={() => {
+					addToCart(Product);
+				}}
+				class="btn btn-success rounded-btn">Add to cart</button
+			>
 		</div>
 	</article>
 {/if}
