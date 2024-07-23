@@ -19,8 +19,17 @@
 	</header>
 	{#if CartProducts && CartProducts.length > 0}
 		<ul class="w-full">
+			<li class="flex gap-2 items-center border-b font-bold">
+				<span class="w-16">Image</span>
+				<span class="flex-1">Part Name</span>
+				<span class="flex-1">Part Code</span>
+				<span>Price</span>
+				<span>Quantity</span>
+				<span>Total</span>
+				<span>Action</span>
+			</li>
 			{#each CartProducts as product}
-				<li class="flex gap-2 items-center border">
+				<li class="flex gap-2 items-center border-b justify-evenly">
 					<figure class="w-16 h-16 flex justify-center items-center">
 						<img
 							src="https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/{product.image}"
@@ -32,20 +41,24 @@
 						<p>{product.part_code}</p>
 					</div>
 					<p>{product.price.toFixed(2)}€</p>
-					<p>{product.quantity}</p>
+					<input type="number" min="1" class="w-12 text-center" bind:value={product.quantity} />
 					<p>{(product.quantity * product.price).toFixed(2)}€</p>
 					<button class="btn btn-sm btn-warning" on:click={() => removeFromCart(product.id)}
 						>Remove</button
 					>
 				</li>
 			{/each}
-			<p>Cart total: <span>{total.toFixed(2)}€</span></p>
+			<p class="text-end">Cart total: <span>{total.toFixed(2)}€</span></p>
 		</ul>
 	{:else}
 		<p>Your cart is empty</p>
 	{/if}
 	<footer>
-		<button class="btn btn-success" on:click={clearCart}>Confirm order</button>
-		<button class="btn btn-warning" on:click={clearCart}>Clear Cart</button>
+		<button class="btn btn-success" disabled={CartProducts.length <= 0} on:click={clearCart}
+			>Confirm order</button
+		>
+		<button class="btn btn-warning" disabled={CartProducts.length <= 0} on:click={clearCart}
+			>Clear Cart</button
+		>
 	</footer>
 </section>
