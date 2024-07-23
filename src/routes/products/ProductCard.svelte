@@ -17,6 +17,7 @@
 			<p class="font-bold">
 				Price: <span class="font-normal text-2xl">{Product.price.toFixed(2)}€</span>
 			</p>
+			<button class="btn btn-success rounded-btn">Add to cart</button>
 		</div>
 	</article>
 {/if}
