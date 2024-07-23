@@ -2,7 +2,7 @@
 This is a personal boilerplate to get projects up and running faster
 
 ## What's in here?
-- An installation of SvelteKit
+- An installation of SvelteKit (ESLint, Prettier)
 
 ## Running locally
 1. `git clone git@github.com:mostghoste/SveltekitBoilerplate.git`
