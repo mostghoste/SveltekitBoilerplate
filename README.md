@@ -4,6 +4,7 @@ This is a personal boilerplate to get projects up and running faster
 ## What's in here?
 - An installation of SvelteKit (ESLint, Prettier)
 - A connection to Supabase via the supabase client
+- tailwindcss and daisyUI for styling
 
 ## Running locally
 1. `git clone git@github.com:mostghoste/SveltekitBoilerplate.git`
