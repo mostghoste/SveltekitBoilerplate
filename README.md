@@ -10,3 +10,6 @@ This is a personal boilerplate to get projects up and running faster
 2. `npm i`
 3. Change `.env.example` to `.env` and configure your Project URL and Anon Key variables
 4. `npm run dev`
+
+## Examples
+Some examples can be found in the `/examples` route
