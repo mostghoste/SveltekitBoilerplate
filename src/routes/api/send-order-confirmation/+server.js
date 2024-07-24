@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { Resend } from 'resend';
 
-const resend = new Resend('re_GLZojMSa_B8B53mm2iCujpWnySR15FtMh');
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST({ request }) {
   const { email, cart } = await request.json();
