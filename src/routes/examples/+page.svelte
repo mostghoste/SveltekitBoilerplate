@@ -1,4 +1,6 @@
 <script>
+	import AuthForm from '$lib/components/AuthForm.svelte';
+
 	/** @type {import('./$types').PageData} */
 	export let data;
 	$: ({ countries, supabase, user } = data);
@@ -50,7 +52,8 @@
 		<h3 class="font-bold text-l">Auth check</h3>
 		{#if !user}
 			<p>You are currently not logged in.</p>
-			<a href="/auth" class="btn btn-primary">Log in</a>
+			<AuthForm></AuthForm>
+			<!-- <a href="/auth" class="btn btn-primary">Log in</a> -->
 		{:else}
 			<p>You are currently logged in as user <strong>{user.email}</strong></p>
 			<p>Raw user data:</p>
