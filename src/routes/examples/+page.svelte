@@ -34,6 +34,11 @@
 				class="underline">here.</a
 			>
 		</p>
+		<p>
+			<strong>Note: </strong>If you don't configure Resend (Or other email sending service) in the
+			Authentication section of Supabase, it will have a rate limit of ~3 emails per hour. This
+			could cause issues, so don't do that in prod, lol.
+		</p>
 	</div>
 
 	<div>
