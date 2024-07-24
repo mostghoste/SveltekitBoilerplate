@@ -1,5 +1,6 @@
 <script>
 	import { cart } from '../stores/cart';
+	import { sendOrderConfirmation } from '$lib/sendOrderConfirmation';
 
 	// Subscribe to the cart store
 	let CartProducts = [];
@@ -11,6 +12,19 @@
 
 	// Helper functions from the cart store
 	const { removeFromCart, clearCart } = cart;
+
+	// Function to handle order confirmation
+	async function confirmOrder() {
+		try {
+			const email = 'sarunas969@gmail.com'; // Replace with the customer's email address
+			await sendOrderConfirmation(email, CartProducts);
+			alert('Order confirmed and email sent!');
+			clearCart();
+		} catch (error) {
+			alert('Failed to send order confirmation email');
+			console.error(error);
+		}
+	}
 </script>
 
 <section class="border flex flex-col items-center p-2 gap-2">
@@ -54,7 +68,7 @@
 		<p>Your cart is empty</p>
 	{/if}
 	<footer>
-		<button class="btn btn-success" disabled={CartProducts.length <= 0} on:click={clearCart}
+		<button class="btn btn-success" disabled={CartProducts.length <= 0} on:click={confirmOrder}
 			>Confirm order</button
 		>
 		<button class="btn btn-warning" disabled={CartProducts.length <= 0} on:click={clearCart}
