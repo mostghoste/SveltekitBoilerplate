@@ -1,7 +1,14 @@
 <script>
 	/** @type {import('./$types').PageData} */
 	export let data;
-	$: ({ countries } = data);
+	$: ({ countries, supabase, user } = data);
+
+	$: logout = async () => {
+		const { error } = await supabase.auth.signOut();
+		if (error) {
+			console.error(error);
+		}
+	};
 </script>
 
 <article class="p-4 flex flex-col gap-4">
@@ -39,6 +46,17 @@
 			Authentication section of Supabase, it will have a rate limit of ~3 emails per hour. This
 			could cause issues, so don't do that in prod, lol.
 		</p>
+
+		<h3 class="font-bold text-l">Auth check</h3>
+		{#if !user}
+			<p>You are currently not logged in.</p>
+			<a href="/auth" class="btn btn-primary">Log in</a>
+		{:else}
+			<p>You are currently logged in as user <strong>{user.email}</strong></p>
+			<p>Raw user data:</p>
+			<p class="text-sm">{JSON.stringify(user)}</p>
+			<button class="btn btn-warning" on:click={logout}>Sign out</button>
+		{/if}
 	</div>
 
 	<div>
