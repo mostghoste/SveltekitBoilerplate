@@ -13,10 +13,15 @@ export async function POST({ request }) {
 
   const totalAmount = cart.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2);
 
-  // Send the email using Resend
+  // Sender details
+  const senderAddress = process.env.EMAIL_SENDER_ADDRESS;
+  const senderName = process.env.EMAIL_SENDER_NAME;
+  const salesRecipient = process.env.EMAIL_SALES_RECIPIENT;
+
+  // Send the email to the customer
   try {
-    const { data, error } = await resend.emails.send({
-      from: 'Agrobond Wholesale <info@stebetojas.lt>',
+    const customerEmailResponse = await resend.emails.send({
+      from: `${senderName} <${senderAddress}>`,
       to: [email],
       subject: 'Order Confirmation',
       html: `<strong>Thank you for your order!</strong><br/><br/>
@@ -24,15 +29,31 @@ export async function POST({ request }) {
              <strong>Total Amount:</strong> ${totalAmount}€`
     });
 
-    if (error) {
-      console.error({ error });
-      return json({ message: 'Failed to send email' }, { status: 500 });
+    if (customerEmailResponse.error) {
+      console.error({ error: customerEmailResponse.error });
+      return json({ message: 'Failed to send email to customer' }, { status: 500 });
     }
 
-    console.log({ data });
-    return json({ message: 'Email sent successfully' });
+    // Send the email to the sales recipient
+    const salesEmailResponse = await resend.emails.send({
+      from: `${senderName} <${senderAddress}>`,
+      to: [salesRecipient],
+      subject: 'New Order Received',
+      html: `<strong>New order received!</strong><br/><br/>
+             <strong>Order Details:</strong><br/>${orderDetails.replace(/\n/g, '<br/>')}<br/><br/>
+             <strong>Total Amount:</strong> ${totalAmount}€<br/><br/>
+             <strong>Customer Contact Information:</strong><br/>${email}`
+    });
+
+    if (salesEmailResponse.error) {
+      console.error({ error: salesEmailResponse.error });
+      return json({ message: 'Failed to send email to sales recipient' }, { status: 500 });
+    }
+
+    console.log({ customerEmailResponse, salesEmailResponse });
+    return json({ message: 'Emails sent successfully' });
   } catch (error) {
     console.error('Error sending email:', error);
-    return json({ message: 'Failed to send email' }, { status: 500 });
+    return json({ message: 'Failed to send emails' }, { status: 500 });
   }
 }
