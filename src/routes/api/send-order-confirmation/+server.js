@@ -1,7 +1,8 @@
 import { json } from '@sveltejs/kit';
 import { Resend } from 'resend';
+import { RESEND_API_KEY, EMAIL_SENDER_ADDRESS, EMAIL_SENDER_NAME, EMAIL_SALES_RECIPIENT } from '$env/static/private'
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(RESEND_API_KEY);
 
 export async function POST({ request }) {
   const { email, cart } = await request.json();
@@ -13,15 +14,10 @@ export async function POST({ request }) {
 
   const totalAmount = cart.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2);
 
-  // Sender details
-  const senderAddress = process.env.EMAIL_SENDER_ADDRESS;
-  const senderName = process.env.EMAIL_SENDER_NAME;
-  const salesRecipient = process.env.EMAIL_SALES_RECIPIENT;
-
   // Send the email to the customer
   try {
     const customerEmailResponse = await resend.emails.send({
-      from: `${senderName} <${senderAddress}>`,
+      from: `${EMAIL_SENDER_NAME} <${EMAIL_SENDER_ADDRESS}>`,
       to: [email],
       subject: 'Order Confirmation',
       html: `<strong>Thank you for your order!</strong><br/><br/>
@@ -36,8 +32,8 @@ export async function POST({ request }) {
 
     // Send the email to the sales recipient
     const salesEmailResponse = await resend.emails.send({
-      from: `${senderName} <${senderAddress}>`,
-      to: [salesRecipient],
+      from: `${EMAIL_SENDER_NAME} <${EMAIL_SENDER_ADDRESS}>`,
+      to: [EMAIL_SALES_RECIPIENT],
       subject: 'New Order Received',
       html: `<strong>New order received!</strong><br/><br/>
              <strong>Order Details:</strong><br/>${orderDetails.replace(/\n/g, '<br/>')}<br/><br/>
