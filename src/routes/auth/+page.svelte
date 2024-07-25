@@ -10,5 +10,6 @@
 		<input type="email" name="email" class="input input-bordered" placeholder="Email" />
 		<input type="password" name="password" class="input input-bordered" placeholder="Password" />
 		<button type="submit" class="btn btn-success">Log in</button>
+		<!-- <button formaction="/auth?/signup">Sign up</button> -->
 	</form>
 </main>
