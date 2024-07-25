@@ -67,12 +67,25 @@ const authGuard: Handle = async ({ event, resolve }) => {
   event.locals.session = session
   event.locals.user = user
 
-  if (!event.locals.session && event.url.pathname.startsWith('/private')) {
-    redirect(303, '/auth')
+  // Supabase example code
+  // if (!event.locals.session && event.url.pathname.startsWith('/private')) {
+  //   redirect(303, '/auth')
+  // }
+
+  // if (event.locals.session && event.url.pathname === '/auth') {
+  //   redirect(303, '/private')
+  // }
+
+  // Non-logged-in users are always redirected to the login page (/)
+  if (!event.locals.session) {
+    if (event.url.pathname !== '/') {
+      throw redirect(303, '/');
+    }
   }
 
-  if (event.locals.session && event.url.pathname === '/auth') {
-    redirect(303, '/private')
+  // Logged-in users are redirected from the login page (/) to /products
+  if (event.locals.session && event.url.pathname === '/') {
+    throw redirect(303, '/products');
   }
 
   return resolve(event)
