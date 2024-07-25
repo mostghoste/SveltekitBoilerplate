@@ -32,24 +32,27 @@ const supabase: Handle = async ({ event, resolve }) => {
    * JWT before returning the session.
    */
   event.locals.safeGetSession = async () => {
-    const {
-      data: { session },
-    } = await event.locals.supabase.auth.getSession()
+    const { data: { session } } = await event.locals.supabase.auth.getSession();
     if (!session) {
-      return { session: null, user: null }
+      return { session: null, user: null, role: null };
     }
 
-    const {
-      data: { user },
-      error,
-    } = await event.locals.supabase.auth.getUser()
+    const { data: { user }, error } = await event.locals.supabase.auth.getUser();
     if (error) {
-      // JWT validation has failed
-      return { session: null, user: null }
+      return { session: null, user: null, role: null };
     }
 
-    return { session, user }
-  }
+    // Fetch the user role using the secure function
+    const { data: roleData, error: roleError } = await event.locals.supabase
+      .rpc('get_user_role', { user_id: user.id });
+
+    if (roleError) {
+      console.error('Error fetching user role:', roleError);
+      return { session, user, role: null };
+    }
+
+    return { session, user, role: roleData };
+  };
 
   return resolve(event, {
     filterSerializedResponseHeaders(name) {
@@ -63,9 +66,10 @@ const supabase: Handle = async ({ event, resolve }) => {
 }
 
 const authGuard: Handle = async ({ event, resolve }) => {
-  const { session, user } = await event.locals.safeGetSession()
-  event.locals.session = session
-  event.locals.user = user
+  const { session, user, role } = await event.locals.safeGetSession();
+  event.locals.session = session;
+  event.locals.user = user;
+  event.locals.role = role;
 
   // Supabase example code
   // if (!event.locals.session && event.url.pathname.startsWith('/private')) {

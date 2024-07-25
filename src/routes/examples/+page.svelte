@@ -3,7 +3,7 @@
 
 	/** @type {import('./$types').PageData} */
 	export let data;
-	$: ({ countries, supabase, user } = data);
+	$: ({ countries, supabase, user, role } = data);
 
 	$: logout = async () => {
 		const { error } = await supabase.auth.signOut();
@@ -56,6 +56,7 @@
 			<!-- <a href="/auth" class="btn btn-primary">Log in</a> -->
 		{:else}
 			<p>You are currently logged in as user <strong>{user.email}</strong></p>
+			<p>Your user role: {role}</p>
 			<p>Raw user data:</p>
 			<p class="text-sm">{JSON.stringify(user)}</p>
 			<button class="btn btn-warning" on:click={logout}>Sign out</button>
