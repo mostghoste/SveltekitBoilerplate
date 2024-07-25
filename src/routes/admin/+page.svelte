@@ -6,3 +6,5 @@
 
 <p>This page is only accessible to admin users</p>
 <p>Role: {role}</p>
+
+<a href="/admin/users" class="btn">Manage users</a>
