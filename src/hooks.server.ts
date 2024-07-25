@@ -87,6 +87,11 @@ const authGuard: Handle = async ({ event, resolve }) => {
     }
   }
 
+  // Non-admin users are not allowed to reach the admin url's
+  if (event.locals.session && event.locals.role !== 'admin' && event.url.pathname.startsWith('/admin')) {
+    throw redirect(303, '/products');
+  }
+
   // Logged-in users are redirected from the login page (/) to /products
   if (event.locals.session && event.url.pathname === '/') {
     throw redirect(303, '/products');
