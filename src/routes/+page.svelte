@@ -1,6 +1,5 @@
 <script>
 	import AgrobondLogo from '$lib/assets/images/logo.png';
-	import AuthForm from '$lib/components/AuthForm.svelte';
 </script>
 
 <main class="flex justify-center items-center flex-col h-screen gap-2">

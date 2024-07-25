@@ -78,7 +78,7 @@ const authGuard: Handle = async ({ event, resolve }) => {
 
   // Non-logged-in users are always redirected to the login page (/)
   if (!event.locals.session) {
-    if (event.url.pathname !== '/') {
+    if (event.url.pathname !== '/' && !event.url.pathname.startsWith("/auth")) {
       throw redirect(303, '/');
     }
   }

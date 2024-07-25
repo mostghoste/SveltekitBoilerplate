@@ -11,22 +11,23 @@ export const actions: Actions = {
     const { error } = await supabase.auth.signUp({ email, password })
     if (error) {
       console.error(error)
-      redirect(303, '/auth')
+      redirect(303, '/')
     } else {
-      redirect(303, '/auth')
+      redirect(303, '/')
     }
   },
   login: async ({ request, locals: { supabase } }) => {
     const formData = await request.formData()
     const email = formData.get('email') as string
     const password = formData.get('password') as string
+    console.log("Attempting log in")
 
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
       console.error(error)
-      redirect(303, '/auth')
-    } else {
       redirect(303, '/')
+    } else {
+      redirect(303, '/products')
     }
   },
 }
