@@ -1,4 +1,5 @@
 <script>
+	import { goto } from '$app/navigation';
 	export let data;
 	$: ({ token_hash, type, supabase } = data);
 
@@ -30,6 +31,7 @@
 			errorMessage = updateError.message;
 		} else {
 			alert('Password set successfully! You are now logged in!');
+			goto('/');
 		}
 	}
 </script>
@@ -60,5 +62,5 @@
 	{#if errorMessage}
 		<p style="color: red;">{errorMessage}</p>
 	{/if}
-	<button type="submit">Set Password</button>
+	<button class="btn" type="submit">Set Password</button>
 </form>
