@@ -38,7 +38,7 @@ export const actions = {
         console.log(JSON.stringify(error))
       return fail(500, { error: error.message });
     } else {
-        console.log("User: " + user)
+        console.log("User: " + JSON.stringify(user))
     }
 
     return { success: true };
