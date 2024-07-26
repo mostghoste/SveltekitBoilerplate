@@ -4,7 +4,7 @@
 </script>
 
 <main class="flex flex-col gap-2 m-2">
-	<h1 class="font-bold">All Users</h1>
+	<h1 class="font-bold">User management</h1>
 	<table class="table">
 		<thead>
 			<tr>

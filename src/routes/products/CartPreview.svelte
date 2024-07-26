@@ -1,5 +1,5 @@
 <script>
-	import { cart } from '../stores/cart';
+	import { cart } from '$lib/stores/cart';
 	import { sendOrderConfirmation } from '$lib/sendOrderConfirmation';
 
 	// Subscribe to the cart store

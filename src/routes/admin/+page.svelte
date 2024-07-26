@@ -8,3 +8,4 @@
 <p>Role: {role}</p>
 
 <a href="/admin/users" class="btn">Manage users</a>
+<a href="/admin/products" class="btn">Manage products</a>

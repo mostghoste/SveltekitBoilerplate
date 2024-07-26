@@ -1,6 +1,6 @@
 <script>
 	export let Product;
-	import { cart } from '../stores/cart';
+	import { cart } from '$lib/stores/cart';
 
 	// Helper function from the cart store
 	const { addToCart } = cart;
