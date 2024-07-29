@@ -1,6 +1,41 @@
 <script>
 	export let data;
+	import { onMount } from 'svelte';
+
+	let selectedUsers = [];
+	let selectedCustomerGroup = '';
+	let customerGroups = [];
+	let confirmDisabled = true;
+
 	$: ({ supabase, user, role, users } = data);
+
+	onMount(async () => {
+		const { data: customerGroupsData, error } = await supabase.from('customer_groups').select('*');
+		if (error) {
+			console.error('Error fetching customer groups:', error);
+		} else {
+			customerGroups = customerGroupsData;
+		}
+	});
+
+	function toggleUserSelection(userId) {
+		if (selectedUsers.includes(userId)) {
+			selectedUsers = selectedUsers.filter((id) => id !== userId);
+		} else {
+			selectedUsers = [...selectedUsers, userId];
+		}
+	}
+
+	function handleCustomerGroupChange(event) {
+		selectedCustomerGroup = event.target.value;
+		confirmDisabled = !selectedCustomerGroup;
+	}
+
+	function handleSubmit(event) {
+		if (!confirmDisabled) {
+			event.target.submit();
+		}
+	}
 </script>
 
 <main class="flex flex-col gap-2 m-2">
@@ -8,6 +43,12 @@
 	<table class="table">
 		<thead>
 			<tr>
+				<th
+					><input
+						type="checkbox"
+						on:change={() => users.forEach((user) => toggleUserSelection(user.id))}
+					/></th
+				>
 				<th>Email</th>
 				<th>Name</th>
 				<th>Phone number</th>
@@ -19,6 +60,13 @@
 		<tbody>
 			{#each users as user}
 				<tr>
+					<td
+						><input
+							type="checkbox"
+							value={user.id}
+							on:change={() => toggleUserSelection(user.id)}
+						/></td
+					>
 					<td>{user.role === 'admin' ? '👑 ' : ''}{user.email}</td>
 					<td
 						>{user.first_name || user.last_name
@@ -41,12 +89,47 @@
 					</td>
 				</tr>
 			{/each}
-			<tr><td class="font-bold">Total users: {users.length}</td></tr>
+			<tr>
+				<td colspan="7" class="font-bold">
+					Total users: {users.length}
+					{#if selectedUsers.length > 0}
+						&nbsp;| Selected users: {selectedUsers.length}
+					{/if}
+				</td>
+			</tr>
 		</tbody>
 	</table>
 
+	<!-- Management actions -->
+	<section class="mt-4">
+		<h2 class="font-bold">Management actions</h2>
+		<div class="flex gap-2 items-center">
+			<label for="customer_group_select">Change customer group to</label>
+			<select
+				id="customer_group_select"
+				class="select select-bordered"
+				on:change={handleCustomerGroupChange}
+			>
+				<option value="">Select group</option>
+				{#each customerGroups as group}
+					<option value={group.id}>{group.group_name}</option>
+				{/each}
+			</select>
+			<form
+				method="post"
+				action="?/updateCustomerGroups"
+				class="flex items-center gap-2"
+				on:submit={handleSubmit}
+			>
+				<input type="hidden" name="customer_group_id" value={selectedCustomerGroup} />
+				<input type="hidden" name="user_ids" value={selectedUsers.join(',')} />
+				<button class="btn btn-success" type="submit" disabled={confirmDisabled}>Confirm</button>
+			</form>
+		</div>
+	</section>
+
 	<!-- Form to invite a new user -->
-	<form method="post" action="?/invite" class="flex gap-2 flex-col p-2 border w-96">
+	<form method="post" action="?/invite" class="flex gap-2 flex-col p-2 border w-96 mt-4">
 		<h2 class="font-bold">Invite a user</h2>
 		<div class="flex flex-col gap-1">
 			<label for="email">Email <span class="text-red-500">*</span></label>
