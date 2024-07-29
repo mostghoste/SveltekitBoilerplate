@@ -26,11 +26,22 @@ export const actions = {
         }
       })
 
-    const { data: user, error } = await supabase.auth.admin.inviteUserByEmail(email, {
+    // Log the optional data
+    console.log("Optional data being passed:", {
       first_name,
       last_name,
       company,
-      phone,
+      phone
+    });
+
+    // Invite user with additional metadata
+    const { data: user, error } = await supabase.auth.admin.inviteUserByEmail(email, {
+      data: {
+        first_name,
+        last_name,
+        company,
+        phone
+      }
     });
 
     if (error) {
