@@ -55,4 +55,5 @@
 		class="btn btn-warning">Log out</button
 	>
 </nav>
+
 <slot></slot>
