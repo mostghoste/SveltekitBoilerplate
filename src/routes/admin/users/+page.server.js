@@ -40,7 +40,7 @@ export const actions = {
         first_name,
         last_name,
         company,
-        phone
+        phone_number: phone
       }
     });
 
@@ -62,7 +62,7 @@ export const load = async ({ locals }) => {
     // Fetch profiles
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
-      .select('id, email, first_name, last_name, company, customer_groups (group_name), role, account_status');
+      .select('id, email, first_name, last_name, company, customer_groups (group_name), role, account_status, phone_number');
   
     if (profilesError) {
       console.error('Error fetching profiles:', profilesError);
@@ -78,7 +78,8 @@ export const load = async ({ locals }) => {
       company: profile.company,
       customer_group: profile.customer_groups.group_name,
       role: profile.role,
-      status: profile.account_status
+      status: profile.account_status,
+      phone_number: profile.phone_number
     }));
   
     return {

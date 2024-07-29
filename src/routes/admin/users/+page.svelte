@@ -10,6 +10,7 @@
 			<tr>
 				<th>Email</th>
 				<th>Name</th>
+				<th>Phone number</th>
 				<th>Company</th>
 				<th>Customer Group</th>
 				<th>Status</th>
@@ -24,6 +25,7 @@
 							? `${user.first_name || ''} ${user.last_name || ''}`
 							: '-'}</td
 					>
+					<td>{user.phone_number || '-'}</td>
 					<td>{user.company || '-'}</td>
 					<td>{user.customer_group || 'Default'}</td>
 					<td class="flex items-center gap-1">
