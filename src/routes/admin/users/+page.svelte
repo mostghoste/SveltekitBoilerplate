@@ -6,6 +6,10 @@
 
 	$: ({ supabase, user, role, users, customerGroups } = data);
 
+	// Reactive statement to update the confirm button state based on selected customer group
+	$: confirmDisabled = !selectedCustomerGroup;
+
+	// Function to toggle the selection of a single user
 	function toggleUserSelection(userId) {
 		if (selectedUsers.includes(userId)) {
 			selectedUsers = selectedUsers.filter((id) => id !== userId);
@@ -14,11 +18,21 @@
 		}
 	}
 
+	// Function to handle the change of the customer group dropdown
 	function handleCustomerGroupChange(event) {
 		selectedCustomerGroup = event.target.value;
-		confirmDisabled = !selectedCustomerGroup;
 	}
 
+	// Function to handle the selection/deselection of all users
+	function handleSelectAll(event) {
+		if (event.target.checked) {
+			selectedUsers = users.map((user) => user.id);
+		} else {
+			selectedUsers = [];
+		}
+	}
+
+	// Function to handle the form submission
 	function handleSubmit(event) {
 		if (!confirmDisabled) {
 			event.target.submit();
@@ -31,12 +45,13 @@
 	<table class="table">
 		<thead>
 			<tr>
-				<th
-					><input
+				<th>
+					<input
 						type="checkbox"
-						on:change={() => users.forEach((user) => toggleUserSelection(user.id))}
-					/></th
-				>
+						on:change={handleSelectAll}
+						checked={selectedUsers.length === users.length && users.length > 0}
+					/>
+				</th>
 				<th>Email</th>
 				<th>Name</th>
 				<th>Phone number</th>
@@ -48,13 +63,14 @@
 		<tbody>
 			{#each users as user}
 				<tr>
-					<td
-						><input
+					<td>
+						<input
 							type="checkbox"
 							value={user.id}
 							on:change={() => toggleUserSelection(user.id)}
-						/></td
-					>
+							checked={selectedUsers.includes(user.id)}
+						/>
+					</td>
 					<td>{user.role === 'admin' ? '👑 ' : ''}{user.email}</td>
 					<td
 						>{user.first_name || user.last_name
