@@ -26,7 +26,17 @@
 					>
 					<td>{user.company || '-'}</td>
 					<td>{user.customer_group || 'Default'}</td>
-					<td>{user.status || 'Unknown'}</td>
+					<td class="flex items-center gap-1">
+						{#if user.status === 'active'}
+							<div class="bg-green-500 rounded-full w-3 h-3"></div>
+							Active
+						{:else if user.status === 'invited'}
+							<div class="bg-yellow-500 rounded-full w-3 h-3"></div>
+							Invited
+						{:else}
+							Unknown
+						{/if}
+					</td>
 				</tr>
 			{/each}
 			<tr><td class="font-bold">Total users: {users.length}</td></tr>

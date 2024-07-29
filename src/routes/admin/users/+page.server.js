@@ -51,7 +51,7 @@ export const load = async ({ locals }) => {
     // Fetch profiles
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
-      .select('id, email, first_name, last_name, company, customer_groups (group_name), role');
+      .select('id, email, first_name, last_name, company, customer_groups (group_name), role, account_status');
   
     if (profilesError) {
       console.error('Error fetching profiles:', profilesError);
@@ -67,7 +67,7 @@ export const load = async ({ locals }) => {
       company: profile.company,
       customer_group: profile.customer_groups.group_name,
       role: profile.role,
-      status: profile.status
+      status: profile.account_status
     }));
   
     return {
