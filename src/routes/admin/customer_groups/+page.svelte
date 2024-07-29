@@ -24,3 +24,22 @@
 		{/each}
 	</tbody>
 </table>
+
+<!-- Form to add a new customer group -->
+<form method="post" action="?/addCustomerGroup" class="flex gap-2 flex-col p-2 border w-96 mt-4">
+	<h2 class="font-bold">Add a new customer group</h2>
+	<div class="flex flex-col gap-1">
+		<label for="group_name">Group Name <span class="text-red-500">*</span></label>
+		<input class="input input-bordered" type="text" id="group_name" name="group_name" required />
+	</div>
+	<div class="flex flex-col gap-1">
+		<label for="group_description">Group Description</label>
+		<input
+			class="input input-bordered"
+			type="text"
+			id="group_description"
+			name="group_description"
+		/>
+	</div>
+	<button class="btn btn-success" type="submit">Add Group</button>
+</form>
