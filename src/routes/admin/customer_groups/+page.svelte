@@ -10,7 +10,7 @@
 			<th class="">ID</th>
 			<th class="">Group Name</th>
 			<th class="">Group Description</th>
-			<!-- <th class="">Created At</th> -->
+			<th class="">Actions</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -19,7 +19,18 @@
 				<td class="">{group.id}</td>
 				<td class="">{group.group_name}</td>
 				<td class="">{group.group_description || 'No description'}</td>
-				<!-- <td class="">{new Date(group.created_at).toLocaleString()}</td> -->
+				<td class="">
+					{#if group.group_name !== 'Default'}
+						<form
+							method="post"
+							action="?/deleteCustomerGroup"
+							onsubmit="return confirm('Are you sure you want to delete this group? All customers assigned to this group will be returned to default, and prices assigned to this group will be deleted.');"
+						>
+							<input type="hidden" name="group_id" value={group.id} />
+							<button class="btn btn-sm btn-error" type="submit">Delete</button>
+						</form>
+					{/if}
+				</td>
 			</tr>
 		{/each}
 	</tbody>

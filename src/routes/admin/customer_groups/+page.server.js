@@ -44,4 +44,27 @@ export const actions = {
         success: true,
       };
     },
+    deleteCustomerGroup: async ({ request, locals }) => {
+      const supabase = locals.supabase;
+      const formData = await request.formData();
+      const groupId = formData.get('group_id');
+  
+      if (!groupId) {
+        return fail(400, { error: 'Group ID is required' });
+      }
+  
+      const { error } = await supabase
+        .from('customer_groups')
+        .delete()
+        .eq('id', groupId);
+  
+      if (error) {
+        console.error('Error deleting customer group:', error);
+        return fail(500, { error: 'Failed to delete customer group' });
+      }
+  
+      return {
+        success: true,
+      };
+    },
   };
