@@ -6,8 +6,28 @@
 
 	$: ({ supabase, user, role, users, customerGroups } = data);
 
+	let emailFilter = '';
+	let nameFilter = '';
+	let phoneFilter = '';
+	let companyFilter = '';
+	let groupFilter = '';
+	let statusFilter = '';
+
 	// Reactive statement to update the confirm button state based on selected customer group
 	$: confirmDisabled = !selectedCustomerGroup;
+
+	// Reactive statement to filter users based on the input values
+	$: filteredUsers = users.filter((user) => {
+		const name = `${user.first_name || ''} ${user.last_name || ''}`.trim().toLowerCase();
+		return (
+			user.email.toLowerCase().includes(emailFilter.toLowerCase()) &&
+			name.includes(nameFilter.toLowerCase()) &&
+			(user.phone_number || '').toLowerCase().includes(phoneFilter.toLowerCase()) &&
+			(user.company || '').toLowerCase().includes(companyFilter.toLowerCase()) &&
+			(user.customer_group || 'Default').toLowerCase().includes(groupFilter.toLowerCase()) &&
+			user.status.toLowerCase().includes(statusFilter.toLowerCase())
+		);
+	});
 
 	// Function to toggle the selection of a single user
 	function toggleUserSelection(userId) {
@@ -26,7 +46,7 @@
 	// Function to handle the selection/deselection of all users
 	function handleSelectAll(event) {
 		if (event.target.checked) {
-			selectedUsers = users.map((user) => user.id);
+			selectedUsers = filteredUsers.map((user) => user.id);
 		} else {
 			selectedUsers = [];
 		}
@@ -45,11 +65,20 @@
 	<table class="table">
 		<thead>
 			<tr>
+				<th></th>
+				<th><input type="text" placeholder="Search email" bind:value={emailFilter} /></th>
+				<th><input type="text" placeholder="Search name" bind:value={nameFilter} /></th>
+				<th><input type="text" placeholder="Search phone" bind:value={phoneFilter} /></th>
+				<th><input type="text" placeholder="Search company" bind:value={companyFilter} /></th>
+				<th><input type="text" placeholder="Search group" bind:value={groupFilter} /></th>
+				<th><input type="text" placeholder="Search status" bind:value={statusFilter} /></th>
+			</tr>
+			<tr>
 				<th>
 					<input
 						type="checkbox"
 						on:change={handleSelectAll}
-						checked={selectedUsers.length === users.length && users.length > 0}
+						checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
 					/>
 				</th>
 				<th>Email</th>
@@ -61,7 +90,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each users as user}
+			{#each filteredUsers as user}
 				<tr>
 					<td>
 						<input
