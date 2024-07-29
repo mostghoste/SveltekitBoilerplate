@@ -9,11 +9,22 @@ export const load = async ({ locals }) => {
   // Fetch profiles
   const { data: profiles, error: profilesError } = await supabase
     .from('profiles')
-    .select('id, email, first_name, last_name, company, customer_groups (group_name), role, account_status, phone_number');
+    .select('id, email, first_name, last_name, company, customer_groups (group_name), role, account_status, phone_number')
+    .order('email', { ascending: true });
 
   if (profilesError) {
     console.error('Error fetching profiles:', profilesError);
     return { users: [] };
+  }
+
+  // Fetch customer groups
+  const { data: customerGroups, error: customerGroupsError } = await supabase
+    .from('customer_groups')
+    .select('*');
+
+  if (customerGroupsError) {
+    console.error('Error fetching customer groups:', customerGroupsError);
+    return { customerGroups: [] };
   }
 
   // Map profiles to the expected format
@@ -31,6 +42,7 @@ export const load = async ({ locals }) => {
 
   return {
     users: usersWithProfiles,
+    customerGroups,
   };
 };
 

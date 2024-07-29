@@ -1,22 +1,10 @@
 <script>
 	export let data;
-	import { onMount } from 'svelte';
-
 	let selectedUsers = [];
 	let selectedCustomerGroup = '';
-	let customerGroups = [];
 	let confirmDisabled = true;
 
-	$: ({ supabase, user, role, users } = data);
-
-	onMount(async () => {
-		const { data: customerGroupsData, error } = await supabase.from('customer_groups').select('*');
-		if (error) {
-			console.error('Error fetching customer groups:', error);
-		} else {
-			customerGroups = customerGroupsData;
-		}
-	});
+	$: ({ supabase, user, role, users, customerGroups } = data);
 
 	function toggleUserSelection(userId) {
 		if (selectedUsers.includes(userId)) {
