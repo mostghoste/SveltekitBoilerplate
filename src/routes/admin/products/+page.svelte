@@ -3,13 +3,39 @@
 	export let data;
 	let products = data.products;
 	let prices = data.prices;
+	let totalCount = data.totalCount;
+	let page = data.page;
+	let totalPages = data.totalPages;
 
 	function getPricesForProduct(productId) {
 		return prices.filter((price) => price.product_id === productId);
 	}
+
+	function goToPage(newPage) {
+		if (newPage > 0 && newPage <= totalPages) {
+			window.location.href = `?page=${newPage}`;
+		}
+	}
 </script>
 
 <h1 class="font-bold">Product Management</h1>
+
+<!-- Pagination Info and Controls (Top) -->
+<div class="flex justify-between items-center mb-2">
+	<span>Total Products: {totalCount}</span>
+	<div class="flex items-center gap-2">
+		<button class="btn btn-secondary" disabled={page === 1} on:click={() => goToPage(page - 1)}
+			>Previous</button
+		>
+		<span>Page {page} of {totalPages}</span>
+		<button
+			class="btn btn-secondary"
+			disabled={page === totalPages}
+			on:click={() => goToPage(page + 1)}>Next</button
+		>
+	</div>
+</div>
+
 <!-- Form to create a new product -->
 <h2 class="font-bold mt-4">Add a New Product</h2>
 <form method="post" action="?/createProduct" class="flex gap-2 flex-col p-2 border w-96">
@@ -36,6 +62,7 @@
 	<button class="btn btn-success" type="submit">Add Product</button>
 </form>
 
+<!-- Products Table -->
 <table class="table w-full">
 	<thead>
 		<tr>
@@ -76,3 +103,19 @@
 		{/each}
 	</tbody>
 </table>
+
+<!-- Pagination Info and Controls (Bottom) -->
+<div class="flex justify-between items-center mt-2">
+	<span>Total Products: {totalCount}</span>
+	<div class="flex items-center gap-2">
+		<button class="btn btn-secondary" disabled={page === 1} on:click={() => goToPage(page - 1)}
+			>Previous</button
+		>
+		<span>Page {page} of {totalPages}</span>
+		<button
+			class="btn btn-secondary"
+			disabled={page === totalPages}
+			on:click={() => goToPage(page + 1)}>Next</button
+		>
+	</div>
+</div>

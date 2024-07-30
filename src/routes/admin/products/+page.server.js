@@ -1,17 +1,32 @@
 import { fail } from '@sveltejs/kit';
 
 /** @type {import('./$types').PageServerLoad} */
-export const load = async ({ locals }) => {
+export const load = async ({ locals, url }) => {
   const supabase = locals.supabase;
+  const page = parseInt(url.searchParams.get('page')) || 1;
+  const limit = 50; // Number of products per page
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
 
-  // Fetch all products
+  // Fetch the total count of products
+  const { count: totalCount, error: countError } = await supabase
+    .from('products')
+    .select('*', { count: 'exact', head: true });
+
+  if (countError) {
+    console.error('Error fetching product count:', countError);
+    return { products: [], prices: [], totalCount: 0, page, totalPages: 0 };
+  }
+
+  // Fetch products with pagination using range
   const { data: products, error: productsError } = await supabase
     .from('products')
-    .select('id, group_name, part_name, part_code, image');
+    .select('id, group_name, part_name, part_code, image')
+    .range(from, to);
 
   if (productsError) {
     console.error('Error fetching products:', productsError);
-    return { products: [] };
+    return { products: [], prices: [], totalCount, page, totalPages: Math.ceil(totalCount / limit) };
   }
 
   // Fetch all prices including the related customer group and product details
@@ -21,12 +36,15 @@ export const load = async ({ locals }) => {
 
   if (pricesError) {
     console.error('Error fetching prices:', pricesError);
-    return { products, prices: [] };
+    return { products, prices: [], totalCount, page, totalPages: Math.ceil(totalCount / limit) };
   }
 
   return {
     products,
     prices,
+    totalCount,
+    page,
+    totalPages: Math.ceil(totalCount / limit),
   };
 };
 
