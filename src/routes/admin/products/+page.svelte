@@ -9,7 +9,33 @@
 	}
 </script>
 
-<h1 class="font-bold">Product management</h1>
+<h1 class="font-bold">Product Management</h1>
+<!-- Form to create a new product -->
+<h2 class="font-bold mt-4">Add a New Product</h2>
+<form method="post" action="?/createProduct" class="flex gap-2 flex-col p-2 border w-96">
+	<div class="flex flex-col gap-1">
+		<label for="part_name">Part Name <span class="text-red-500">*</span></label>
+		<input class="input input-bordered" type="text" id="part_name" name="part_name" required />
+	</div>
+	<div class="flex flex-col gap-1">
+		<label for="part_code">Part Code <span class="text-red-500">*</span></label>
+		<input class="input input-bordered" type="text" id="part_code" name="part_code" required />
+	</div>
+	<div class="flex flex-col gap-1">
+		<label for="group_name">Group Name</label>
+		<input class="input input-bordered" type="text" id="group_name" name="group_name" />
+	</div>
+	<div class="flex flex-col gap-1">
+		<label for="image">Image URL</label>
+		<input class="input input-bordered" type="text" id="image" name="image" />
+	</div>
+	<div class="flex flex-col gap-1">
+		<label for="price">Price</label>
+		<input class="input input-bordered" type="number" step="0.01" id="price" name="price" />
+	</div>
+	<button class="btn btn-success" type="submit">Add Product</button>
+</form>
+
 <table class="table w-full">
 	<thead>
 		<tr>
@@ -28,7 +54,7 @@
 				<td>
 					{#if product.image}
 						<img
-							src="https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/{product.image}"
+							src={`https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/${product.image}`}
 							alt={product.part_name}
 							class="w-16 h-16 object-contain"
 						/>
