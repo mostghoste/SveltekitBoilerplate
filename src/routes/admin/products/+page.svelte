@@ -4,6 +4,7 @@
 	$: ({ supabase } = data);
 
 	let productsWithPrices = [];
+	let customerGroups = [];
 	let totalCount = 0;
 	let page = 1;
 	let totalPages = 1;
@@ -29,26 +30,44 @@
 				.from('products')
 				.select(
 					`
-			id, 
-			group_name, 
-			part_name, 
-			part_code, 
-			image,
-			prices (
+		  id, 
+		  group_name, 
+		  part_name, 
+		  part_code, 
+		  image,
+		  prices (
+			id,
+			price,
+			customer_groups (
 			  id,
-			  price,
-			  customer_groups (
-				group_name
-			  )
+			  group_name
 			)
-		  `
+		  )
+		`
 				)
 				.range(from, to);
 
 			if (productsError) throw new Error(productsError.message);
 
 			productsWithPrices = productsResult;
-			console.log(JSON.stringify(productsWithPrices[0])); // Log to check data structure
+
+			// Fetch all customer groups to dynamically generate columns
+			const { data: customerGroupsResult, error: customerGroupsError } = await supabase
+				.from('customer_groups')
+				.select('id, group_name');
+
+			if (customerGroupsError) throw new Error(customerGroupsError.message);
+
+			customerGroups = customerGroupsResult;
+
+			// Map prices by customer group id for easy access
+			productsWithPrices.forEach((product) => {
+				product.pricesByGroup = {};
+				customerGroups.forEach((group) => {
+					const price = product.prices.find((p) => p.customer_groups.id === group.id);
+					product.pricesByGroup[group.id] = price ? price.price : '-';
+				});
+			});
 		} catch (error) {
 			console.error('Error fetching products:', error);
 		}
@@ -114,12 +133,17 @@
 <table class="table w-full">
 	<thead>
 		<tr>
-			<th>Product ID</th>
-			<th>Image</th>
-			<th>Group Name</th>
-			<th>Part Name</th>
-			<th>Part Code</th>
-			<th>Prices by Customer Group</th>
+			<th rowspan="2" class="w-16">Product ID</th>
+			<th rowspan="2" class="w-16">Image</th>
+			<th rowspan="2" class="w-32">Group Name</th>
+			<th rowspan="2" class="w-32">Part Name</th>
+			<th rowspan="2" class="w-16 border-r">Part Code</th>
+			<th colspan={customerGroups.length} class="text-center">Prices per Group</th>
+		</tr>
+		<tr>
+			{#each customerGroups as group}
+				<th class="border-r">{group.group_name}</th>
+			{/each}
 		</tr>
 	</thead>
 	<tbody>
@@ -139,14 +163,12 @@
 				</td>
 				<td>{product.group_name || 'N/A'}</td>
 				<td>{product.part_name || 'N/A'}</td>
-				<td>{product.part_code || 'N/A'}</td>
-				<td>
-					<ul>
-						{#each product.prices as price}
-							<li>{price.customer_groups.group_name}: ${price.price}</li>
-						{/each}
-					</ul>
-				</td>
+				<td class="border-r">{product.part_code || 'N/A'}</td>
+				{#each customerGroups as group}
+					<td class="border-r" title="Price for group '{group.group_name}'"
+						>{product.pricesByGroup[group.id].toFixed(2)}€</td
+					>
+				{/each}
 			</tr>
 		{/each}
 	</tbody>
