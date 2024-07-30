@@ -30,26 +30,24 @@
 				.from('products')
 				.select(
 					`
-		  id, 
-		  group_name, 
-		  part_name, 
-		  part_code, 
-		  image,
-		  prices (
-			id,
-			price,
-			customer_groups (
-			  id,
-			  group_name
-			)
-		  )
-		`
+          id, 
+          group_name, 
+          part_name, 
+          part_code, 
+          image,
+          prices (
+            id,
+            price,
+            customer_groups (
+              id,
+              group_name
+            )
+          )
+        `
 				)
 				.range(from, to);
 
 			if (productsError) throw new Error(productsError.message);
-
-			productsWithPrices = productsResult;
 
 			// Fetch all customer groups to dynamically generate columns
 			const { data: customerGroupsResult, error: customerGroupsError } = await supabase
@@ -61,13 +59,16 @@
 			customerGroups = customerGroupsResult;
 
 			// Map prices by customer group id for easy access
-			productsWithPrices.forEach((product) => {
-				product.pricesByGroup = {};
+			productsWithPrices = productsResult.map((product) => {
+				const pricesByGroup = {};
 				customerGroups.forEach((group) => {
 					const price = product.prices.find((p) => p.customer_groups.id === group.id);
-					product.pricesByGroup[group.id] = price ? price.price : '-';
+					pricesByGroup[group.id] = price ? price.price : 0; // Default value
 				});
+				return { ...product, pricesByGroup };
 			});
+
+			console.log(JSON.stringify(productsWithPrices[0])); // Log to check data structure
 		} catch (error) {
 			console.error('Error fetching products:', error);
 		}
