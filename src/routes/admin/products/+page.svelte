@@ -167,56 +167,73 @@
 	</div>
 </div>
 
-<!-- Products Table -->
-<table class="table w-full">
-	<thead>
-		<tr>
-			<th rowspan="2" class="w-16">Product ID</th>
-			<th rowspan="2" class="w-16">Image</th>
-			<th rowspan="2" class="w-32">Group Name</th>
-			<th rowspan="2" class="w-32">Part Name</th>
-			<th rowspan="2" class="w-16 border-r">Part Code</th>
-			<th colspan={customerGroups.length} class="text-center">Prices per Group</th>
-		</tr>
-		<tr>
-			{#each customerGroups as group}
-				<th class="border-r">{group.group_name}</th>
-			{/each}
-		</tr>
-	</thead>
-	<tbody>
-		{#each productsWithPrices as product}
+<!-- Product Details Table -->
+<div class="flex w-full">
+	<table class="table w-auto">
+		<thead>
 			<tr>
-				<td>{product.id}</td>
-				<td>
-					{#if product.image}
-						<img
-							src={`https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/${product.image}`}
-							alt={product.part_name}
-							class="w-16 h-16 object-contain"
-						/>
-					{:else}
-						No Image
-					{/if}
-				</td>
-				<td>{product.group_name || 'N/A'}</td>
-				<td>{product.part_name || 'N/A'}</td>
-				<td class="border-r">{product.part_code || 'N/A'}</td>
-				{#each customerGroups as group}
-					<td class="border-r">
-						<input
-							class="input input-bordered w-full {getStatusClass(product.priceStatus[group.id])}"
-							type="number"
-							step="0.01"
-							value={product.pricesByGroup[group.id]}
-							on:change={(event) => updatePrice(product.id, group.id, event.target.value)}
-						/>
-					</td>
-				{/each}
+				<th class="w-16">Product ID</th>
+				<th class="w-16">Image</th>
+				<th class="w-32">Group Name</th>
+				<th class="w-32">Part Name</th>
+				<th class="w-16 border-r border-black">Part Code</th>
 			</tr>
-		{/each}
-	</tbody>
-</table>
+		</thead>
+		<tbody>
+			{#each productsWithPrices as product}
+				<tr class="h-24">
+					<td>{product.id}</td>
+					<td>
+						{#if product.image}
+							<img
+								src={`https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/${product.image}`}
+								alt={product.part_name}
+								class="w-16 h-16 object-contain"
+							/>
+						{:else}
+							No Image
+						{/if}
+					</td>
+					<td>{product.group_name || 'N/A'}</td>
+					<td>{product.part_name || 'N/A'}</td>
+					<td class="border-r border-black">{product.part_code || 'N/A'}</td>
+				</tr>
+			{/each}
+		</tbody>
+	</table>
+
+	<!-- Prices per Group Table -->
+	<div class="overflow-x-auto">
+		<table class="table w-full">
+			<thead>
+				<tr>
+					{#each customerGroups as group}
+						<th class="border-r">{group.group_name}</th>
+					{/each}
+				</tr>
+			</thead>
+			<tbody>
+				{#each productsWithPrices as product}
+					<tr class="h-24">
+						{#each customerGroups as group}
+							<td class="border-r">
+								<input
+									class="input input-bordered max-w-28 {getStatusClass(
+										product.priceStatus[group.id]
+									)}"
+									type="number"
+									step="0.01"
+									value={product.pricesByGroup[group.id]}
+									on:change={(event) => updatePrice(product.id, group.id, event.target.value)}
+								/>
+							</td>
+						{/each}
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+	</div>
+</div>
 
 <!-- Pagination Info and Controls (Bottom) -->
 <div class="flex justify-between items-center mt-2">
