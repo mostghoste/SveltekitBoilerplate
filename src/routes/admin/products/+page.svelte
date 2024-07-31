@@ -65,7 +65,7 @@
 					const price = product.prices.find((p) => p.customer_groups.id === group.id);
 					pricesByGroup[group.id] = price ? price.price : 0; // Default value
 				});
-				return { ...product, pricesByGroup };
+				return { ...product, pricesByGroup, priceStatus: {} };
 			});
 		} catch (error) {
 			console.error('Error fetching products:', error);
@@ -74,15 +74,41 @@
 
 	async function updatePrice(productId, groupId, newPrice) {
 		try {
-			const { data, error } = await supabase
+			const { error } = await supabase
 				.from('prices')
 				.update({ price: parseFloat(newPrice) })
 				.match({ product_id: productId, customer_group_id: groupId });
 
 			if (error) throw new Error(error.message);
+
+			// Set success status
+			const productIndex = productsWithPrices.findIndex((p) => p.id === productId);
+			if (productIndex !== -1) {
+				productsWithPrices[productIndex].priceStatus[groupId] = 'success';
+				productsWithPrices = [...productsWithPrices]; // Reassign to trigger reactivity
+
+				// Reset status after 3 seconds
+				setTimeout(() => {
+					productsWithPrices[productIndex].priceStatus[groupId] = '';
+					productsWithPrices = [...productsWithPrices]; // Reassign to trigger reactivity
+				}, 3000);
+			}
 		} catch (error) {
 			console.error('Error updating price:', error);
+
+			// Set error status
+			const productIndex = productsWithPrices.findIndex((p) => p.id === productId);
+			if (productIndex !== -1) {
+				productsWithPrices[productIndex].priceStatus[groupId] = 'error';
+				productsWithPrices = [...productsWithPrices]; // Reassign to trigger reactivity
+			}
 		}
+	}
+
+	function getStatusClass(status) {
+		if (status === 'success') return 'border-green-500';
+		if (status === 'error') return 'border-red-500';
+		return '';
 	}
 
 	function goToPage(newPage) {
@@ -179,7 +205,7 @@
 				{#each customerGroups as group}
 					<td class="border-r">
 						<input
-							class="input input-bordered w-full"
+							class="input input-bordered w-full {getStatusClass(product.priceStatus[group.id])}"
 							type="number"
 							step="0.01"
 							value={product.pricesByGroup[group.id]}
