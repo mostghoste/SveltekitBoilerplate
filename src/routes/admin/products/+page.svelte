@@ -25,24 +25,18 @@
 			totalCount = totalCountResult;
 			totalPages = Math.ceil(totalCount / limit);
 
-			// Fetch products with their prices and customer groups
+			// Fetch products with their prices and categories
 			const { data: productsResult, error: productsError } = await supabase
 				.from('products')
 				.select(
 					`
-					id, 
-					group_name, 
-					part_name, 
-					part_code, 
+					id,
+					category_id,
+					part_name,
+					part_code,
 					image,
-					prices (
-						id,
-						price,
-						customer_groups (
-							id,
-							group_name
-						)
-					)
+					categories(category_name),
+					prices(price, customer_group_id)
 				`
 				)
 				.range(from, to);
@@ -62,8 +56,8 @@
 			productsWithPrices = productsResult.map((product) => {
 				const pricesByGroup = {};
 				customerGroups.forEach((group) => {
-					const price = product.prices.find((p) => p.customer_groups.id === group.id);
-					pricesByGroup[group.id] = price ? price.price : 0; // Default value
+					const priceObj = product.prices.find((p) => p.customer_group_id === group.id);
+					pricesByGroup[group.id] = priceObj ? priceObj.price : 0; // Default value
 				});
 				return { ...product, pricesByGroup, priceStatus: {} };
 			});
@@ -137,8 +131,8 @@
 		<input class="input input-bordered" type="text" id="part_code" name="part_code" required />
 	</div>
 	<div class="flex flex-col gap-1">
-		<label for="group_name">Group Name</label>
-		<input class="input input-bordered" type="text" id="group_name" name="group_name" />
+		<label for="category_id">Category</label>
+		<input class="input input-bordered" type="text" id="category_id" name="category_id" />
 	</div>
 	<div class="flex flex-col gap-1">
 		<label for="image">Image URL</label>
@@ -174,7 +168,7 @@
 			<tr>
 				<th class="w-16">Product ID</th>
 				<th class="w-16">Image</th>
-				<th class="w-32">Group Name</th>
+				<th class="w-32">Category Name</th>
 				<th class="w-32">Part Name</th>
 				<th class="w-16 border-r border-black">Part Code</th>
 			</tr>
@@ -194,7 +188,7 @@
 							No Image
 						{/if}
 					</td>
-					<td>{product.group_name || 'N/A'}</td>
+					<td>{product.categories?.category_name || 'N/A'}</td>
 					<td>{product.part_name || 'N/A'}</td>
 					<td class="border-r border-black">{product.part_code || 'N/A'}</td>
 				</tr>
