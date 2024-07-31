@@ -1,9 +1,7 @@
-import { supabase } from "$lib/supabaseClient";
-
 /** @type {import('./$types').PageServerLoad} */
-export async function load() {
+export async function load( {locals} ) {
 
-    let { data: products, error } = await supabase
+    let { data: products, error } = await locals.supabase
     .from('products')
     .select('*')
     .range(0, 29)
