@@ -30,20 +30,20 @@
 				.from('products')
 				.select(
 					`
-          id, 
-          group_name, 
-          part_name, 
-          part_code, 
-          image,
-          prices (
-            id,
-            price,
-            customer_groups (
-              id,
-              group_name
-            )
-          )
-        `
+					id, 
+					group_name, 
+					part_name, 
+					part_code, 
+					image,
+					prices (
+						id,
+						price,
+						customer_groups (
+							id,
+							group_name
+						)
+					)
+				`
 				)
 				.range(from, to);
 
@@ -67,10 +67,21 @@
 				});
 				return { ...product, pricesByGroup };
 			});
-
-			console.log(JSON.stringify(productsWithPrices[0])); // Log to check data structure
 		} catch (error) {
 			console.error('Error fetching products:', error);
+		}
+	}
+
+	async function updatePrice(productId, groupId, newPrice) {
+		try {
+			const { data, error } = await supabase
+				.from('prices')
+				.update({ price: parseFloat(newPrice) })
+				.match({ product_id: productId, customer_group_id: groupId });
+
+			if (error) throw new Error(error.message);
+		} catch (error) {
+			console.error('Error updating price:', error);
 		}
 	}
 
@@ -166,9 +177,15 @@
 				<td>{product.part_name || 'N/A'}</td>
 				<td class="border-r">{product.part_code || 'N/A'}</td>
 				{#each customerGroups as group}
-					<td class="border-r" title="Price for group '{group.group_name}'"
-						>{product.pricesByGroup[group.id].toFixed(2)}€</td
-					>
+					<td class="border-r">
+						<input
+							class="input input-bordered w-full"
+							type="number"
+							step="0.01"
+							value={product.pricesByGroup[group.id]}
+							on:change={(event) => updatePrice(product.id, group.id, event.target.value)}
+						/>
+					</td>
 				{/each}
 			</tr>
 		{/each}
