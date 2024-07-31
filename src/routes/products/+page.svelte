@@ -24,7 +24,7 @@
 			count
 		} = await supabase
 			.from('products')
-			.select('*, prices(price)', { count: 'exact' })
+			.select('id, image, part_code, part_name, group_name, prices(price)', { count: 'exact' })
 			.eq('prices.customer_group_id', customerGroupId)
 			.range(from, to);
 
@@ -52,7 +52,7 @@
 
 <main class="flex flex-col items-center gap-2">
 	<h1 class="text-2xl p-2">Products</h1>
-	<!-- <CartPreview></CartPreview> -->
+	<CartPreview></CartPreview>
 	{#if products.length > 0}
 		<section class="flex flex-wrap gap-4 justify-center">
 			{#each products as product}

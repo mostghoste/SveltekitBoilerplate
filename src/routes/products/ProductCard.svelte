@@ -9,11 +9,13 @@
 {#if Product}
 	<article class="flex bg-base-200 w-[36rem] rounded-box shadow-md">
 		<figure class="w-64 h-64 flex justify-center items-center bg-base-100 p-2">
-			<img
-				src="https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/{Product.image}"
-				alt="Part {Product.part_code}"
-				class="bg-cover"
-			/>
+			{#if Product.image}
+				<img
+					src="https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/{Product.image}"
+					alt="Part {Product.part_code}"
+					class="bg-cover"
+				/>
+			{/if}
 		</figure>
 		<div class="p-4">
 			<h3 class="font-bold text-2xl">{Product.part_name}</h3>

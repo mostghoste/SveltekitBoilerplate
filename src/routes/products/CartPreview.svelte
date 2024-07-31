@@ -8,7 +8,10 @@
 		CartProducts = value;
 	});
 
-	$: total = CartProducts.reduce((sum, product) => sum + product.quantity * product.price, 0);
+	$: total = CartProducts.reduce(
+		(sum, product) => sum + product.quantity * product.prices[0]?.price,
+		0
+	);
 
 	// Helper functions from the cart store
 	const { removeFromCart, clearCart } = cart;
@@ -54,9 +57,9 @@
 						<p>{product.part_name}</p>
 						<p>{product.part_code}</p>
 					</div>
-					<p>{product.price.toFixed(2)}€</p>
+					<p>{product.prices[0]?.price.toFixed(2)}€</p>
 					<input type="number" min="1" class="w-12 text-center" bind:value={product.quantity} />
-					<p>{(product.quantity * product.price).toFixed(2)}€</p>
+					<p>{(product.quantity * product.prices[0]?.price).toFixed(2)}€</p>
 					<button class="btn btn-sm btn-warning" on:click={() => removeFromCart(product.id)}
 						>Remove</button
 					>
