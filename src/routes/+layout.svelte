@@ -46,7 +46,7 @@
 </script>
 
 {#if user}
-	<div class="navbar bg-base-200">
+	<div class="navbar bg-base-200 sticky top-0 shadow-md">
 		<div class="flex-1">
 			<a class="btn btn-ghost normal-case text-xl flex items-center" href="/products">
 				<img src={AgrobondLogo} alt="Agrobond logo" class="max-w-24 mr-2" />
