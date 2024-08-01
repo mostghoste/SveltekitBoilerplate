@@ -217,51 +217,6 @@
 
 <h1 class="font-bold">Product Management</h1>
 
-<!-- Form to create a new product -->
-<h2 class="font-bold">Add a New Product</h2>
-<form
-	method="post"
-	action="?/createProduct"
-	class="flex gap-2 flex-col p-2 border w-96"
-	enctype="multipart/form-data"
->
-	<div class="flex flex-col gap-1">
-		<label for="part_name">Part Name <span class="text-red-500">*</span></label>
-		<input class="input input-bordered" type="text" id="part_name" name="part_name" required />
-	</div>
-	<div class="flex flex-col gap-1">
-		<label for="part_code">Part Code <span class="text-red-500">*</span></label>
-		<input class="input input-bordered" type="text" id="part_code" name="part_code" required />
-	</div>
-	<div class="flex flex-col gap-1">
-		<label for="price">Price <span class="text-red-500">*</span></label>
-		<input
-			class="input input-bordered"
-			type="number"
-			step="0.01"
-			id="price"
-			name="price"
-			required
-			placeholder="0.00"
-		/>
-	</div>
-	<div class="flex flex-col gap-1">
-		<label for="category_id">Category <span class="text-red-500">*</span></label>
-		<select class="input input-bordered" id="category_id" name="category_id" required>
-			<option value="" disabled selected>Select a category</option>
-			{#each categories as category}
-				<option value={category.id}>{category.category_name}</option>
-			{/each}
-		</select>
-	</div>
-	<div class="flex flex-col gap-1">
-		<label for="image">Image File</label>
-		<input class="file-input" type="file" id="image" name="image" accept="image/*" />
-	</div>
-
-	<button class="btn btn-success" type="submit">Add Product</button>
-</form>
-
 <!-- Search Form -->
 <form class="flex gap-2" on:submit={handleSearch}>
 	<input
@@ -281,6 +236,7 @@
 
 <!-- Pagination Info and Controls (Top) -->
 <PaginationControl {page} {totalPages} {totalCount} {goToPage} />
+
 <!-- Product Details Table -->
 <div class="flex w-full">
 	<table class="table w-auto">
@@ -290,7 +246,7 @@
 				<th class="w-16">Image</th>
 				<th class="w-32">Category</th>
 				<th class="w-32">Part Name</th>
-				<th class="w-16 border-r border-black">Part Code</th>
+				<th class="w-16 border-r-2 border-r-base-300">Part Code</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -343,7 +299,7 @@
 							on:change={(event) => updateField(product.id, 'part_name', event.target.value)}
 						/>
 					</td>
-					<td class="border-r border-black">
+					<td class="border-r-2 border-r-base-300">
 						<input
 							class="input input-bordered {getStatusClass(product.priceStatus['part_code'])}"
 							type="text"
@@ -391,3 +347,48 @@
 
 <!-- Pagination Info and Controls (Top) -->
 <PaginationControl {page} {totalPages} {totalCount} {goToPage} />
+
+<!-- Form to create a new product -->
+<h2 class="font-bold">Add a New Product</h2>
+<form
+	method="post"
+	action="?/createProduct"
+	class="flex gap-2 flex-col p-2 border w-96"
+	enctype="multipart/form-data"
+>
+	<div class="flex flex-col gap-1">
+		<label for="part_name">Part Name <span class="text-red-500">*</span></label>
+		<input class="input input-bordered" type="text" id="part_name" name="part_name" required />
+	</div>
+	<div class="flex flex-col gap-1">
+		<label for="part_code">Part Code <span class="text-red-500">*</span></label>
+		<input class="input input-bordered" type="text" id="part_code" name="part_code" required />
+	</div>
+	<div class="flex flex-col gap-1">
+		<label for="price">Price <span class="text-red-500">*</span></label>
+		<input
+			class="input input-bordered"
+			type="number"
+			step="0.01"
+			id="price"
+			name="price"
+			required
+			placeholder="0.00"
+		/>
+	</div>
+	<div class="flex flex-col gap-1">
+		<label for="category_id">Category <span class="text-red-500">*</span></label>
+		<select class="input input-bordered" id="category_id" name="category_id" required>
+			<option value="" disabled selected>Select a category</option>
+			{#each categories as category}
+				<option value={category.id}>{category.category_name}</option>
+			{/each}
+		</select>
+	</div>
+	<div class="flex flex-col gap-1">
+		<label for="image">Image File</label>
+		<input class="file-input" type="file" id="image" name="image" accept="image/*" />
+	</div>
+
+	<button class="btn btn-success" type="submit">Add Product</button>
+</form>
