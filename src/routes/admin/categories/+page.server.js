@@ -8,7 +8,8 @@ export const load = async ({ locals }) => {
   // Fetch categories
   const { data: categories, error: categoriesError } = await supabase
     .from('categories')
-    .select('*');
+    .select('*')
+    .order('id', { ascending: true });
 
   if (categoriesError) {
     console.error('Error fetching categories:', categoriesError);

@@ -1,9 +1,59 @@
 <script>
 	/** @type {import('./$types').PageData} */
 	export let data;
+	$: ({ supabase } = data);
 
-	// Ensure categories is always an array
 	let categories = data.categories || [];
+
+	async function updateCategoryName(categoryId, newName) {
+		if (!newName.trim()) {
+			setCategoryStatus(categoryId, 'error');
+			return;
+		}
+
+		try {
+			const { error } = await supabase
+				.from('categories')
+				.update({ category_name: newName })
+				.match({ id: categoryId });
+
+			if (error) {
+				setCategoryStatus(categoryId, 'error');
+				console.error('Error updating category name:', error);
+				return;
+			}
+
+			setCategoryStatus(categoryId, 'success');
+			setTimeout(() => {
+				clearCategoryStatus(categoryId);
+			}, 3000);
+		} catch (error) {
+			setCategoryStatus(categoryId, 'error');
+			console.error('Error updating category name:', error);
+		}
+	}
+
+	function setCategoryStatus(categoryId, status) {
+		const category = categories.find((cat) => cat.id === categoryId);
+		if (category) {
+			category.status = status;
+			categories = [...categories];
+		}
+	}
+
+	function clearCategoryStatus(categoryId) {
+		const category = categories.find((cat) => cat.id === categoryId);
+		if (category) {
+			category.status = '';
+			categories = [...categories];
+		}
+	}
+
+	function getStatusClass(status) {
+		if (status === 'success') return 'border-green-500';
+		if (status === 'error') return 'border-red-500';
+		return '';
+	}
 </script>
 
 <h1 class="font-bold">Manage Categories</h1>
@@ -12,7 +62,6 @@
 		<tr>
 			<th>ID</th>
 			<th>Category Name</th>
-			<!-- <th>Category Description</th> -->
 			<th>Actions</th>
 		</tr>
 	</thead>
@@ -21,8 +70,14 @@
 			{#each categories as category}
 				<tr>
 					<td>{category.id}</td>
-					<td>{category.category_name}</td>
-					<!-- <td>{category.category_description || 'No description'}</td> -->
+					<td>
+						<input
+							type="text"
+							value={category.category_name}
+							class="input input-bordered {getStatusClass(category.status)}"
+							on:change={(e) => updateCategoryName(category.id, e.target.value)}
+						/>
+					</td>
 					<td>
 						<form
 							method="post"
@@ -56,14 +111,5 @@
 			required
 		/>
 	</div>
-	<!-- <div class="flex flex-col gap-1">
-		<label for="category_description">Category Description</label>
-		<input
-			class="input input-bordered"
-			type="text"
-			id="category_description"
-			name="category_description"
-		/>
-	</div> -->
 	<button class="btn btn-success" type="submit">Add Category</button>
 </form>
