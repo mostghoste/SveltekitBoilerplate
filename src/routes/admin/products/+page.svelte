@@ -217,8 +217,65 @@
 
 <h1 class="font-bold">Product Management</h1>
 
+<!-- Button to open the modal -->
+<button class="btn mb-4" on:click={() => document.getElementById('product-modal').showModal()}>
+	Add New Product
+</button>
+
+<!-- Modal -->
+<dialog id="product-modal" class="modal">
+	<div class="modal-box">
+		<form method="dialog">
+			<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+		</form>
+		<h3 class="font-bold text-lg">Add a New Product</h3>
+		<form
+			method="post"
+			action="?/createProduct"
+			class="flex gap-2 flex-col p-2"
+			enctype="multipart/form-data"
+		>
+			<div class="flex flex-col gap-1">
+				<label for="part_name">Part Name <span class="text-red-500">*</span></label>
+				<input class="input input-bordered" type="text" id="part_name" name="part_name" required />
+			</div>
+			<div class="flex flex-col gap-1">
+				<label for="part_code">Part Code <span class="text-red-500">*</span></label>
+				<input class="input input-bordered" type="text" id="part_code" name="part_code" required />
+			</div>
+			<div class="flex flex-col gap-1">
+				<label for="price">Price <span class="text-red-500">*</span></label>
+				<input
+					class="input input-bordered"
+					type="number"
+					step="0.01"
+					id="price"
+					name="price"
+					required
+					placeholder="0.00"
+				/>
+			</div>
+			<div class="flex flex-col gap-1">
+				<label for="category_id">Category <span class="text-red-500">*</span></label>
+				<select class="input input-bordered" id="category_id" name="category_id" required>
+					<option value="" disabled selected>Select a category</option>
+					{#each categories as category}
+						<option value={category.id}>{category.category_name}</option>
+					{/each}
+				</select>
+			</div>
+			<div class="flex flex-col gap-1">
+				<label for="image">Image File</label>
+				<input class="file-input" type="file" id="image" name="image" accept="image/*" />
+			</div>
+
+			<button class="btn btn-success" type="submit">Add Product</button>
+		</form>
+	</div>
+</dialog>
+
 <!-- Search Form -->
-<form class="flex gap-2" on:submit={handleSearch}>
+<form class="flex gap-2 mb-4" on:submit={handleSearch}>
 	<input
 		type="text"
 		class="input input-bordered w-full"
@@ -345,50 +402,5 @@
 	</div>
 </div>
 
-<!-- Pagination Info and Controls (Top) -->
+<!-- Pagination Info and Controls (Bottom) -->
 <PaginationControl {page} {totalPages} {totalCount} {goToPage} />
-
-<!-- Form to create a new product -->
-<h2 class="font-bold">Add a New Product</h2>
-<form
-	method="post"
-	action="?/createProduct"
-	class="flex gap-2 flex-col p-2 border w-96"
-	enctype="multipart/form-data"
->
-	<div class="flex flex-col gap-1">
-		<label for="part_name">Part Name <span class="text-red-500">*</span></label>
-		<input class="input input-bordered" type="text" id="part_name" name="part_name" required />
-	</div>
-	<div class="flex flex-col gap-1">
-		<label for="part_code">Part Code <span class="text-red-500">*</span></label>
-		<input class="input input-bordered" type="text" id="part_code" name="part_code" required />
-	</div>
-	<div class="flex flex-col gap-1">
-		<label for="price">Price <span class="text-red-500">*</span></label>
-		<input
-			class="input input-bordered"
-			type="number"
-			step="0.01"
-			id="price"
-			name="price"
-			required
-			placeholder="0.00"
-		/>
-	</div>
-	<div class="flex flex-col gap-1">
-		<label for="category_id">Category <span class="text-red-500">*</span></label>
-		<select class="input input-bordered" id="category_id" name="category_id" required>
-			<option value="" disabled selected>Select a category</option>
-			{#each categories as category}
-				<option value={category.id}>{category.category_name}</option>
-			{/each}
-		</select>
-	</div>
-	<div class="flex flex-col gap-1">
-		<label for="image">Image File</label>
-		<input class="file-input" type="file" id="image" name="image" accept="image/*" />
-	</div>
-
-	<button class="btn btn-success" type="submit">Add Product</button>
-</form>
