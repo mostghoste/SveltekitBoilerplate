@@ -107,11 +107,17 @@
 				productsWithPrices[productIndex].priceStatus[fieldName] = 'success';
 				productsWithPrices = [...productsWithPrices]; // Reassign to trigger reactivity
 
-				// Reset status after 3 seconds
-				setTimeout(() => {
-					productsWithPrices[productIndex].priceStatus[fieldName] = '';
-					productsWithPrices = [...productsWithPrices]; // Reassign to trigger reactivity
-				}, 3000);
+				// Check if the field updated is category_id
+				if (fieldName === 'category_id') {
+					// Refresh the product list to reflect the category change
+					fetchProductsWithPrices(page);
+				} else {
+					// Reset status after 3 seconds for non-category changes
+					setTimeout(() => {
+						productsWithPrices[productIndex].priceStatus[fieldName] = '';
+						productsWithPrices = [...productsWithPrices]; // Reassign to trigger reactivity
+					}, 3000);
+				}
 			}
 		} catch (error) {
 			console.error(`Error updating ${fieldName}:`, error);
@@ -197,12 +203,7 @@
 				});
 
 				if (response.ok) {
-					const data = await response.json();
-					const productIndex = productsWithPrices.findIndex((p) => p.id === parseInt(productId));
-					if (productIndex !== -1) {
-						productsWithPrices[productIndex].image = data.imageName;
-						productsWithPrices = [...productsWithPrices]; // Trigger reactivity
-					}
+					fetchProductsWithPrices(page);
 				} else {
 					console.error('Failed to upload image');
 				}
