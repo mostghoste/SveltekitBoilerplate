@@ -80,10 +80,24 @@
 			const productIndex = productsWithPrices.findIndex((p) => p.id === productId);
 			if (productIndex !== -1) {
 				productsWithPrices[productIndex][fieldName] = newValue;
+				productsWithPrices[productIndex].priceStatus[fieldName] = 'success';
 				productsWithPrices = [...productsWithPrices]; // Reassign to trigger reactivity
+
+				// Reset status after 3 seconds
+				setTimeout(() => {
+					productsWithPrices[productIndex].priceStatus[fieldName] = '';
+					productsWithPrices = [...productsWithPrices]; // Reassign to trigger reactivity
+				}, 3000);
 			}
 		} catch (error) {
 			console.error(`Error updating ${fieldName}:`, error);
+
+			// Set error status
+			const productIndex = productsWithPrices.findIndex((p) => p.id === productId);
+			if (productIndex !== -1) {
+				productsWithPrices[productIndex].priceStatus[fieldName] = 'error';
+				productsWithPrices = [...productsWithPrices]; // Reassign to trigger reactivity
+			}
 		}
 	}
 
@@ -216,11 +230,11 @@
 					</td>
 					<td>
 						<select
-							class="input input-bordered"
+							class="input input-bordered {getStatusClass(product.priceStatus['category_id'])}"
 							bind:value={product.category_id}
 							on:change={(event) => updateField(product.id, 'category_id', event.target.value)}
 						>
-							<option value="" disabled selected>Select a category</option>
+							<option value="" disabled>Select a category</option>
 							{#each categories as category}
 								<option value={category.id}>{category.category_name}</option>
 							{/each}
@@ -228,7 +242,7 @@
 					</td>
 					<td>
 						<input
-							class="input input-bordered"
+							class="input input-bordered {getStatusClass(product.priceStatus['part_name'])}"
 							type="text"
 							value={product.part_name}
 							on:change={(event) => updateField(product.id, 'part_name', event.target.value)}
@@ -236,7 +250,7 @@
 					</td>
 					<td class="border-r border-black">
 						<input
-							class="input input-bordered"
+							class="input input-bordered {getStatusClass(product.priceStatus['part_code'])}"
 							type="text"
 							value={product.part_code}
 							on:change={(event) => updateField(product.id, 'part_code', event.target.value)}
