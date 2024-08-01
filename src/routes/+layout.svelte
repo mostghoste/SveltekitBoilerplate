@@ -47,6 +47,9 @@
 					<li>
 						<a class="btn btn-ghost" href="/admin/customer_groups">Manage customer groups</a>
 					</li>
+					<li>
+						<a class="btn btn-ghost" href="/admin/categories">Manage categories</a>
+					</li>
 				{/if}
 			</ul>
 		</div>
