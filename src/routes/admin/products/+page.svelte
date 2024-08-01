@@ -181,9 +181,34 @@
 	});
 
 	async function handleImageUpload(event) {
-		const form = event.target.closest('form');
-		if (form) {
-			form.submit();
+		const input = event.target;
+		const formData = new FormData();
+		const productId = input.closest('form').querySelector('input[name="product_id"]').value;
+		const file = input.files[0];
+
+		if (file) {
+			formData.append('product_id', productId);
+			formData.append('image', file);
+
+			try {
+				const response = await fetch('?/updateImage', {
+					method: 'POST',
+					body: formData
+				});
+
+				if (response.ok) {
+					const data = await response.json();
+					const productIndex = productsWithPrices.findIndex((p) => p.id === parseInt(productId));
+					if (productIndex !== -1) {
+						productsWithPrices[productIndex].image = data.imageName;
+						productsWithPrices = [...productsWithPrices]; // Trigger reactivity
+					}
+				} else {
+					console.error('Failed to upload image');
+				}
+			} catch (error) {
+				console.error('Error uploading image:', error);
+			}
 		}
 	}
 </script>
