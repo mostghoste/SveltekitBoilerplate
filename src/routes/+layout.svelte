@@ -88,7 +88,7 @@
 						<span class="absolute inset-0 animate-ping rounded-full bg-success opacity-75"></span>
 					{/if}
 				</button>
-				<div class="card card-compact dropdown-content bg-base-100 z-[1] mt-3 w-64 shadow">
+				<div class="card card-compact dropdown-content bg-base-100 z-[1] mt-3 w-72 shadow">
 					<CartPreviewSmall></CartPreviewSmall>
 				</div>
 			</div>
