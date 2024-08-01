@@ -217,7 +217,7 @@
 <h1 class="font-bold">Product Management</h1>
 
 <!-- Form to create a new product -->
-<h2 class="font-bold mt-4">Add a New Product</h2>
+<h2 class="font-bold">Add a New Product</h2>
 <form
 	method="post"
 	action="?/createProduct"
@@ -262,7 +262,7 @@
 </form>
 
 <!-- Search Form -->
-<form class="flex gap-2 mt-4" on:submit={handleSearch}>
+<form class="flex gap-2" on:submit={handleSearch}>
 	<input
 		type="text"
 		class="input input-bordered w-full"
@@ -275,7 +275,7 @@
 		placeholder="Search Part Code"
 		bind:value={partCodeSearch}
 	/>
-	<button type="submit" class="btn btn-primary">Search</button>
+	<button type="submit" class="btn btn-success">Search</button>
 </form>
 
 <!-- Pagination Info and Controls (Top) -->
