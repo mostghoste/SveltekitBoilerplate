@@ -30,11 +30,15 @@
 	}
 </script>
 
-<section class="border flex flex-col items-center p-2 gap-2">
-	<header>
-		<h2 class="font-bold">Cart small</h2>
-	</header>
-	{#if CartProducts && CartProducts.length > 0}
+<section
+	class="border flex flex-col items-center p-2 gap-2 min-h-24 {CartProducts?.length == 0
+		? 'justify-center'
+		: ''}"
+>
+	<!-- <header>
+		<h2 class="font-bold">Your </h2>
+	</header> -->
+	{#if CartProducts?.length > 0}
 		<ul class="w-full">
 			<li class="flex gap-2 items-center border-b font-bold">
 				<span class="w-16">Image</span>
@@ -67,15 +71,15 @@
 			{/each}
 			<p class="text-end">Cart total: <span>{total.toFixed(2)}€</span></p>
 		</ul>
+		<footer>
+			<button class="btn btn-success" disabled={CartProducts.length <= 0} on:click={confirmOrder}
+				>Confirm order</button
+			>
+			<button class="btn btn-warning" disabled={CartProducts.length <= 0} on:click={clearCart}
+				>Clear Cart</button
+			>
+		</footer>
 	{:else}
-		<p>Your cart is empty</p>
+		<p>Your cart is <strong>empty</strong>!</p>
 	{/if}
-	<footer>
-		<button class="btn btn-success" disabled={CartProducts.length <= 0} on:click={confirmOrder}
-			>Confirm order</button
-		>
-		<button class="btn btn-warning" disabled={CartProducts.length <= 0} on:click={clearCart}
-			>Clear Cart</button
-		>
-	</footer>
 </section>
