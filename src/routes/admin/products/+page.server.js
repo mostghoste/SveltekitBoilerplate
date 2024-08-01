@@ -1,4 +1,5 @@
 import { fail } from '@sveltejs/kit';
+import { v4 as uuidv4 } from 'uuid';
 
 /** @type {import('./$types').PageServerLoad} */
 export const load = async ({ locals }) => {
@@ -28,19 +29,40 @@ export const actions = {
     const partName = formData.get('part_name');
     const partCode = formData.get('part_code');
     const categoryId = formData.get('category_id'); // Use category ID
-    const image = formData.get('image') || null; // Optional
     const price = parseFloat(formData.get('price')) || 0.0; // Optional, default to 0.00
+    const imageFile = formData.get('image');
 
     if (!partName || !partCode || !categoryId) {
       return fail(400, { error: 'Part name, part code, and category are required' });
     }
 
-    const { error } = await supabase
-      .from('products')
-      .insert({ part_name: partName, part_code: partCode, category_id: categoryId, image, price });
+    let imageName = null;
+    if (imageFile && imageFile.size > 0) {
+      // Sanitize the image name and create a unique name
+      const ext = imageFile.name.split('.').pop();
+      imageName = `${uuidv4()}.${ext}`;
 
-    if (error) {
-      console.error('Error creating product:', error);
+      // Upload the image to the Supabase storage bucket
+      const { error: uploadError } = await supabase.storage
+        .from('product_images')
+        .upload(imageName, imageFile.stream(), {
+          contentType: imageFile.type, // Set the content type
+          duplex: 'half' // Explicitly set duplex option
+        });
+
+      if (uploadError) {
+        console.error('Error uploading image:', uploadError);
+        return fail(500, { error: 'Failed to upload image' });
+      }
+    }
+
+    // Insert the new product into the database
+    const { error: insertError } = await supabase
+      .from('products')
+      .insert({ part_name: partName, part_code: partCode, category_id: categoryId, image: imageName, price });
+
+    if (insertError) {
+      console.error('Error creating product:', insertError);
       return fail(500, { error: 'Failed to create product' });
     }
 

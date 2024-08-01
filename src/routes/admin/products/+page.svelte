@@ -184,7 +184,12 @@
 
 <!-- Form to create a new product -->
 <h2 class="font-bold mt-4">Add a New Product</h2>
-<form method="post" action="?/createProduct" class="flex gap-2 flex-col p-2 border w-96">
+<form
+	method="post"
+	action="?/createProduct"
+	class="flex gap-2 flex-col p-2 border w-96"
+	enctype="multipart/form-data"
+>
 	<div class="flex flex-col gap-1">
 		<label for="part_name">Part Name <span class="text-red-500">*</span></label>
 		<input class="input input-bordered" type="text" id="part_name" name="part_name" required />
@@ -203,8 +208,8 @@
 		</select>
 	</div>
 	<div class="flex flex-col gap-1">
-		<label for="image">Image URL</label>
-		<input class="input input-bordered" type="text" id="image" name="image" />
+		<label for="image">Image File</label>
+		<input class="file-input" type="file" id="image" name="image" accept="image/*" />
 	</div>
 	<div class="flex flex-col gap-1">
 		<label for="price">Price</label>
