@@ -1,5 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
+	import PaginationControl from './PaginationControl.svelte';
 	export let data;
 	$: ({ supabase } = data);
 
@@ -279,21 +280,7 @@
 </form>
 
 <!-- Pagination Info and Controls (Top) -->
-<div class="flex justify-between items-center mb-2">
-	<span>Total Products: {totalCount}</span>
-	<div class="flex items-center gap-2">
-		<button class="btn btn-secondary" disabled={page === 1} on:click={() => goToPage(page - 1)}
-			>Previous</button
-		>
-		<span>Page {page} of {totalPages}</span>
-		<button
-			class="btn btn-secondary"
-			disabled={page === totalPages}
-			on:click={() => goToPage(page + 1)}>Next</button
-		>
-	</div>
-</div>
-
+<PaginationControl {page} {totalPages} {totalCount} {goToPage} />
 <!-- Product Details Table -->
 <div class="flex w-full">
 	<table class="table w-auto">
@@ -402,18 +389,5 @@
 	</div>
 </div>
 
-<!-- Pagination Info and Controls (Bottom) -->
-<div class="flex justify-between items-center mt-2">
-	<span>Total Products: {totalCount}</span>
-	<div class="flex items-center gap-2">
-		<button class="btn btn-secondary" disabled={page === 1} on:click={() => goToPage(page - 1)}
-			>Previous</button
-		>
-		<span>Page {page} of {totalPages}</span>
-		<button
-			class="btn btn-secondary"
-			disabled={page === totalPages}
-			on:click={() => goToPage(page + 1)}>Next</button
-		>
-	</div>
-</div>
+<!-- Pagination Info and Controls (Top) -->
+<PaginationControl {page} {totalPages} {totalCount} {goToPage} />
