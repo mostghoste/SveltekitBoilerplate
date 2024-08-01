@@ -11,23 +11,17 @@
 	const limit = 50;
 	const categories = data.categories || [];
 
+	// Search fields
+	let partNameSearch = '';
+	let partCodeSearch = '';
+
 	async function fetchProductsWithPrices(page) {
 		try {
 			const from = (page - 1) * limit;
 			const to = from + limit - 1;
 
-			// Fetch the total count of products
-			const { count: totalCountResult, error: countError } = await supabase
-				.from('products')
-				.select('*', { count: 'exact', head: true });
-
-			if (countError) throw new Error(countError.message);
-
-			totalCount = totalCountResult;
-			totalPages = Math.ceil(totalCount / limit);
-
-			// Fetch products with their prices and categories
-			const { data: productsResult, error: productsError } = await supabase
+			// Base query
+			let query = supabase
 				.from('products')
 				.select(
 					`
@@ -42,7 +36,36 @@
 				)
 				.range(from, to);
 
+			// Apply conditional filters
+			if (partNameSearch) {
+				query = query.ilike('part_name', `%${partNameSearch}%`);
+			}
+			if (partCodeSearch) {
+				query = query.ilike('part_code', `%${partCodeSearch}%`);
+			}
+
+			// Fetch the filtered products
+			const { data: productsResult, error: productsError } = await query;
+
 			if (productsError) throw new Error(productsError.message);
+
+			// Fetch the total count of products with the same filters
+			query = supabase.from('products').select('*', { count: 'exact', head: true });
+
+			// Reapply filters for the count query
+			if (partNameSearch) {
+				query = query.ilike('part_name', `%${partNameSearch}%`);
+			}
+			if (partCodeSearch) {
+				query = query.ilike('part_code', `%${partCodeSearch}%`);
+			}
+
+			const { count: totalCountResult, error: countError } = await query;
+
+			if (countError) throw new Error(countError.message);
+
+			totalCount = totalCountResult;
+			totalPages = Math.ceil(totalCount / limit);
 
 			// Fetch all customer groups to dynamically generate columns
 			const { data: customerGroupsResult, error: customerGroupsError } = await supabase
@@ -147,6 +170,11 @@
 		}
 	}
 
+	function handleSearch(event) {
+		event.preventDefault();
+		fetchProductsWithPrices(1);
+	}
+
 	onMount(() => {
 		fetchProductsWithPrices(page);
 	});
@@ -183,6 +211,23 @@
 		<input class="input input-bordered" type="number" step="0.01" id="price" name="price" />
 	</div>
 	<button class="btn btn-success" type="submit">Add Product</button>
+</form>
+
+<!-- Search Form -->
+<form class="flex gap-2 mt-4" on:submit={handleSearch}>
+	<input
+		type="text"
+		class="input input-bordered w-full"
+		placeholder="Search Part Name"
+		bind:value={partNameSearch}
+	/>
+	<input
+		type="text"
+		class="input input-bordered w-full"
+		placeholder="Search Part Code"
+		bind:value={partCodeSearch}
+	/>
+	<button type="submit" class="btn btn-primary">Search</button>
 </form>
 
 <!-- Pagination Info and Controls (Top) -->
