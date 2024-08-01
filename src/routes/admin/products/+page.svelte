@@ -233,7 +233,19 @@
 		<input class="input input-bordered" type="text" id="part_code" name="part_code" required />
 	</div>
 	<div class="flex flex-col gap-1">
-		<label for="category_id">Category</label>
+		<label for="price">Price <span class="text-red-500">*</span></label>
+		<input
+			class="input input-bordered"
+			type="number"
+			step="0.01"
+			id="price"
+			name="price"
+			required
+			placeholder="0.00"
+		/>
+	</div>
+	<div class="flex flex-col gap-1">
+		<label for="category_id">Category <span class="text-red-500">*</span></label>
 		<select class="input input-bordered" id="category_id" name="category_id" required>
 			<option value="" disabled selected>Select a category</option>
 			{#each categories as category}
@@ -245,10 +257,7 @@
 		<label for="image">Image File</label>
 		<input class="file-input" type="file" id="image" name="image" accept="image/*" />
 	</div>
-	<div class="flex flex-col gap-1">
-		<label for="price">Price</label>
-		<input class="input input-bordered" type="number" step="0.01" id="price" name="price" />
-	</div>
+
 	<button class="btn btn-success" type="submit">Add Product</button>
 </form>
 
