@@ -9,6 +9,7 @@
 	let page = 1;
 	let totalPages = 1;
 	const limit = 50;
+	const categories = data.categories || [];
 
 	async function fetchProductsWithPrices(page) {
 		try {
@@ -63,6 +64,26 @@
 			});
 		} catch (error) {
 			console.error('Error fetching products:', error);
+		}
+	}
+
+	async function updateField(productId, fieldName, newValue) {
+		try {
+			const { error } = await supabase
+				.from('products')
+				.update({ [fieldName]: newValue })
+				.eq('id', productId);
+
+			if (error) throw new Error(error.message);
+
+			// Update the local state
+			const productIndex = productsWithPrices.findIndex((p) => p.id === productId);
+			if (productIndex !== -1) {
+				productsWithPrices[productIndex][fieldName] = newValue;
+				productsWithPrices = [...productsWithPrices]; // Reassign to trigger reactivity
+			}
+		} catch (error) {
+			console.error(`Error updating ${fieldName}:`, error);
 		}
 	}
 
@@ -132,7 +153,12 @@
 	</div>
 	<div class="flex flex-col gap-1">
 		<label for="category_id">Category</label>
-		<input class="input input-bordered" type="text" id="category_id" name="category_id" />
+		<select class="input input-bordered" id="category_id" name="category_id" required>
+			<option value="" disabled selected>Select a category</option>
+			{#each categories as category}
+				<option value={category.id}>{category.category_name}</option>
+			{/each}
+		</select>
 	</div>
 	<div class="flex flex-col gap-1">
 		<label for="image">Image URL</label>
@@ -168,7 +194,7 @@
 			<tr>
 				<th class="w-16">Product ID</th>
 				<th class="w-16">Image</th>
-				<th class="w-32">Category Name</th>
+				<th class="w-32">Category</th>
 				<th class="w-32">Part Name</th>
 				<th class="w-16 border-r border-black">Part Code</th>
 			</tr>
@@ -188,9 +214,34 @@
 							No Image
 						{/if}
 					</td>
-					<td>{product.categories?.category_name || 'N/A'}</td>
-					<td>{product.part_name || 'N/A'}</td>
-					<td class="border-r border-black">{product.part_code || 'N/A'}</td>
+					<td>
+						<select
+							class="input input-bordered"
+							bind:value={product.category_id}
+							on:change={(event) => updateField(product.id, 'category_id', event.target.value)}
+						>
+							<option value="" disabled selected>Select a category</option>
+							{#each categories as category}
+								<option value={category.id}>{category.category_name}</option>
+							{/each}
+						</select>
+					</td>
+					<td>
+						<input
+							class="input input-bordered"
+							type="text"
+							value={product.part_name}
+							on:change={(event) => updateField(product.id, 'part_name', event.target.value)}
+						/>
+					</td>
+					<td class="border-r border-black">
+						<input
+							class="input input-bordered"
+							type="text"
+							value={product.part_code}
+							on:change={(event) => updateField(product.id, 'part_code', event.target.value)}
+						/>
+					</td>
 				</tr>
 			{/each}
 		</tbody>
