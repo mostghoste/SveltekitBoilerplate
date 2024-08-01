@@ -1,5 +1,5 @@
 <script>
-	import CartPreview from './CartPreview.svelte';
+	import CartPreview from '$lib/components/CartPreview.svelte';
 	import ProductCard from './ProductCard.svelte';
 	import { onMount } from 'svelte';
 
