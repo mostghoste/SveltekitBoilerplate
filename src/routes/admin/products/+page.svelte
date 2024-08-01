@@ -34,6 +34,7 @@
 					prices(price, customer_group_id)
 				`
 				)
+				.order('id', { ascending: true })
 				.range(from, to);
 
 			// Apply conditional filters
@@ -178,6 +179,13 @@
 	onMount(() => {
 		fetchProductsWithPrices(page);
 	});
+
+	async function handleImageUpload(event) {
+		const form = event.target.closest('form');
+		if (form) {
+			form.submit();
+		}
+	}
 </script>
 
 <h1 class="font-bold">Product Management</h1>
@@ -267,16 +275,31 @@
 			{#each productsWithPrices as product}
 				<tr class="h-24">
 					<td>{product.id}</td>
-					<td>
-						{#if product.image}
-							<img
-								src={`https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/${product.image}`}
-								alt={product.part_name}
-								class="w-16 h-16 object-contain"
+					<td class="relative">
+						<form
+							action="?/updateImage"
+							method="post"
+							enctype="multipart/form-data"
+							class="w-full h-full absolute inset-0 {product.image ? 'top-4' : ''}"
+						>
+							<input type="hidden" name="product_id" value={product.id} />
+							<input
+								type="file"
+								name="image"
+								accept="image/*"
+								class="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+								on:change={handleImageUpload}
 							/>
-						{:else}
-							No Image
-						{/if}
+							{#if product.image}
+								<img
+									src={`https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/${product.image}`}
+									alt={product.part_name}
+									class="w-16 h-16 object-contain"
+								/>
+							{:else}
+								<span class="flex items-center justify-center w-full h-full"> No Image </span>
+							{/if}
+						</form>
 					</td>
 					<td>
 						<select
