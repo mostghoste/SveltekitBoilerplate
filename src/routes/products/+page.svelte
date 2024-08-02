@@ -12,11 +12,15 @@
 	let customerGroupId = data.customerGroupId;
 	let page = 1;
 	const limit = 30;
-	let totalPages = 1;
 	let totalCount = 0;
 	let selectedCategoryId = null;
+	let loading = false;
+	let allLoaded = false;
 
-	async function fetchProducts(page) {
+	async function fetchProducts() {
+		if (loading || allLoaded) return;
+
+		loading = true;
 		const from = (page - 1) * limit;
 		const to = from + limit - 1;
 
@@ -37,29 +41,50 @@
 
 		if (error) {
 			console.error('Error fetching products:', error);
+			loading = false;
 			return;
 		}
 
-		products = productData;
+		products = [...products, ...productData];
 		totalCount = count;
-		totalPages = Math.ceil(count / limit);
-	}
+		page++;
+		loading = false;
 
-	function goToPage(newPage) {
-		if (newPage > 0 && newPage <= totalPages) {
-			page = newPage;
-			fetchProducts(page);
+		if (products.length >= totalCount) {
+			allLoaded = true;
 		}
 	}
 
 	function selectCategory(categoryId) {
 		selectedCategoryId = categoryId;
-		page = 1; // Reset to first page when changing category
-		fetchProducts(page);
+		products = [];
+		page = 1;
+		allLoaded = false;
+		fetchProducts();
+	}
+
+	let observer;
+
+	function setupIntersectionObserver() {
+		const options = {
+			root: null,
+			rootMargin: '0px',
+			threshold: 1.0
+		};
+
+		observer = new IntersectionObserver((entries) => {
+			if (entries[0].isIntersecting) {
+				fetchProducts();
+			}
+		}, options);
+
+		const target = document.querySelector('#infinite-scroll-trigger');
+		if (target) observer.observe(target);
 	}
 
 	onMount(() => {
-		fetchProducts(page);
+		fetchProducts();
+		setupIntersectionObserver();
 	});
 </script>
 
@@ -85,11 +110,9 @@
 			{/each}
 		</ul>
 	</aside>
-
 	<main class="flex flex-col items-center gap-2 w-full">
 		<div class="overflow-x-auto w-full">
 			<table class="table">
-				<!-- head -->
 				<thead class="w-full">
 					<tr>
 						<th class="w-32">Image</th>
@@ -112,36 +135,12 @@
 			</table>
 		</div>
 
-		<div class="flex justify-between items-center my-4">
-			<button on:click={() => goToPage(page - 1)} disabled={page === 1} class="btn btn-secondary">
-				Previous
-			</button>
-			<span>Page {page} of {totalPages}</span>
-			<button
-				on:click={() => goToPage(page + 1)}
-				disabled={page === totalPages}
-				class="btn btn-secondary">Next</button
-			>
-		</div>
-		<!-- {#if products.length > 0}
-			<section class="flex flex-wrap gap-4 justify-center">
-				{#each products as product}
-					<ProductCard Product={product}></ProductCard>
-				{/each}
-			</section>
-			<div class="flex justify-between items-center my-4">
-				<button on:click={() => goToPage(page - 1)} disabled={page === 1} class="btn btn-secondary">
-					Previous
-				</button>
-				<span>Page {page} of {totalPages}</span>
-				<button
-					on:click={() => goToPage(page + 1)}
-					disabled={page === totalPages}
-					class="btn btn-secondary">Next</button
-				>
-			</div>
-		{:else}
-			<p>No products found</p>
-		{/if} -->
+		{#if loading}
+			<div class="loading">Loading...</div>
+		{/if}
+
+		{#if !allLoaded}
+			<div id="infinite-scroll-trigger" class="h-1"></div>
+		{/if}
 	</main>
 </div>
