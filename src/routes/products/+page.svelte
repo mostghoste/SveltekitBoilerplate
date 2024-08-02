@@ -90,12 +90,12 @@
 		<div class="overflow-x-auto w-full">
 			<table class="table">
 				<!-- head -->
-				<thead>
+				<thead class="w-full">
 					<tr>
-						<th>Image</th>
+						<th class="w-32">Image</th>
 						<th>Part details</th>
-						<th>Price</th>
-						<th>Quantity</th>
+						<th class="w-32 text-end">Price</th>
+						<th class="w-32 text-center">Quantity</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -110,17 +110,18 @@
 					{/if}
 				</tbody>
 			</table>
-			<div class="flex justify-between items-center my-4">
-				<button on:click={() => goToPage(page - 1)} disabled={page === 1} class="btn btn-secondary">
-					Previous
-				</button>
-				<span>Page {page} of {totalPages}</span>
-				<button
-					on:click={() => goToPage(page + 1)}
-					disabled={page === totalPages}
-					class="btn btn-secondary">Next</button
-				>
-			</div>
+		</div>
+
+		<div class="flex justify-between items-center my-4">
+			<button on:click={() => goToPage(page - 1)} disabled={page === 1} class="btn btn-secondary">
+				Previous
+			</button>
+			<span>Page {page} of {totalPages}</span>
+			<button
+				on:click={() => goToPage(page + 1)}
+				disabled={page === totalPages}
+				class="btn btn-secondary">Next</button
+			>
 		</div>
 		<!-- {#if products.length > 0}
 			<section class="flex flex-wrap gap-4 justify-center">

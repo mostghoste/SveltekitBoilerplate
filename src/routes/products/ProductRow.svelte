@@ -9,29 +9,30 @@
 
 {#if Product}
 	<tr>
-		<td>
+		<td class="w-32 min-w-48">
 			<div class="flex items-center gap-3">
-				<div class="avatar">
-					<figure class="w-32 h-32 flex justify-center items-center bg-base-100">
-						{#if Product.image}
-							<img
-								src="https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/{Product.image}"
-								alt="{Product.part_name} - {Product.part_code}"
-								title="{Product.part_name} - {Product.part_code}"
-							/>
-						{/if}
-					</figure>
-				</div>
+				<figure
+					class="w-32 h-32 flex justify-center items-center bg-base-100 border rounded-box bg-contain"
+				>
+					{#if Product.image}
+						<img
+							src="https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/{Product.image}"
+							alt="{Product.part_name} - {Product.part_code}"
+							title="{Product.part_name} - {Product.part_code}"
+							class=""
+						/>
+					{/if}
+				</figure>
 			</div>
 		</td>
-		<td>
+		<td class="flex-grow">
 			<div>
 				<div class="font-bold">{Product.part_name}</div>
 				<div class="text-sm opacity-50">{Product.part_code}</div>
 			</div>
 		</td>
-		<td>{Product.prices[0]?.price.toFixed(2) ?? 'N/A'}€</td>
-		<th class="w-48">
+		<td class="text-end">{Product.prices[0]?.price.toFixed(2) ?? 'N/A'}€</td>
+		<th class="w-48 min-w-48 text-center">
 			<button
 				on:click={() => {
 					addToCart(Product);
