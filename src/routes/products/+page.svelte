@@ -86,8 +86,8 @@
 		</ul>
 	</aside>
 
-	<main class="flex flex-col items-center gap-2">
-		<div class="overflow-x-auto">
+	<main class="flex flex-col items-center gap-2 w-full">
+		<div class="overflow-x-auto w-full">
 			<table class="table">
 				<!-- head -->
 				<thead>
@@ -95,7 +95,7 @@
 						<th>Image</th>
 						<th>Part details</th>
 						<th>Price</th>
-						<th></th>
+						<th>Quantity</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -110,6 +110,17 @@
 					{/if}
 				</tbody>
 			</table>
+			<div class="flex justify-between items-center my-4">
+				<button on:click={() => goToPage(page - 1)} disabled={page === 1} class="btn btn-secondary">
+					Previous
+				</button>
+				<span>Page {page} of {totalPages}</span>
+				<button
+					on:click={() => goToPage(page + 1)}
+					disabled={page === totalPages}
+					class="btn btn-secondary">Next</button
+				>
+			</div>
 		</div>
 		<!-- {#if products.length > 0}
 			<section class="flex flex-wrap gap-4 justify-center">

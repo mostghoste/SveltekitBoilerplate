@@ -46,7 +46,7 @@
 </script>
 
 {#if user}
-	<div class="navbar bg-base-200 sticky top-0 shadow-md">
+	<nav class="navbar bg-base-200 sticky top-0 shadow-md z-50">
 		<div class="flex-1">
 			<a class="btn btn-ghost normal-case text-xl flex items-center" href="/products">
 				<img src={AgrobondLogo} alt="Agrobond logo" class="max-w-24 mr-2" />
@@ -65,7 +65,6 @@
 
 		<div class="flex-none">
 			<div class="dropdown dropdown-end">
-				<!-- Animation here -->
 				<button class="btn btn-ghost btn-circle relative">
 					<div class="indicator">
 						<svg
@@ -106,7 +105,7 @@
 				</ul>
 			</div>
 		</div>
-	</div>
+	</nav>
 {/if}
 
 <slot></slot>
