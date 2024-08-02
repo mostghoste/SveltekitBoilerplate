@@ -7,6 +7,7 @@ export async function load({ locals }) {
   if (!userId) {
     return {
       customerGroupId: null,
+      categories: [],
       error: 'User not authenticated'
     };
   }
@@ -21,11 +22,26 @@ export async function load({ locals }) {
   if (profileError || !userProfile) {
     return {
       customerGroupId: null,
+      categories: [],
       error: 'Failed to fetch user profile or user not found'
+    };
+  }
+
+  // Fetch categories
+  const { data: categories, error: categoriesError } = await supabase
+    .from('categories')
+    .select('id, category_name');
+
+  if (categoriesError) {
+    console.error('Error fetching categories:', categoriesError);
+    return {
+      customerGroupId: userProfile.customer_group_id,
+      categories: [],
     };
   }
 
   return {
     customerGroupId: userProfile.customer_group_id,
+    categories,
   };
 }

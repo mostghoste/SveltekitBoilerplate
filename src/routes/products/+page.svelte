@@ -5,7 +5,7 @@
 
 	/** @type {import('./$types').PageData} */
 	export let data;
-	$: ({ supabase } = data);
+	$: ({ supabase, categories } = data);
 
 	let products = [];
 	let customerGroupId = data.customerGroupId;
@@ -13,16 +13,13 @@
 	const limit = 30;
 	let totalPages = 1;
 	let totalCount = 0;
+	let selectedCategoryId = null; // Track the selected category
 
 	async function fetchProducts(page) {
 		const from = (page - 1) * limit;
 		const to = from + limit - 1;
 
-		const {
-			data: productData,
-			error,
-			count
-		} = await supabase
+		let query = supabase
 			.from('products')
 			.select(
 				'id, image, part_code, part_name, category_id, categories(category_name), prices(price)',
@@ -30,6 +27,12 @@
 			)
 			.eq('prices.customer_group_id', customerGroupId)
 			.range(from, to);
+
+		if (selectedCategoryId) {
+			query = query.eq('category_id', selectedCategoryId);
+		}
+
+		const { data: productData, error, count } = await query;
 
 		if (error) {
 			console.error('Error fetching products:', error);
@@ -48,32 +51,60 @@
 		}
 	}
 
+	function selectCategory(categoryId) {
+		selectedCategoryId = categoryId;
+		page = 1; // Reset to first page when changing category
+		fetchProducts(page);
+	}
+
 	onMount(() => {
 		fetchProducts(page);
 	});
 </script>
 
-<main class="flex flex-col items-center gap-2">
-	<h1 class="text-2xl p-2">Products</h1>
-	<!-- <CartPreview></CartPreview> -->
-	{#if products.length > 0}
-		<section class="flex flex-wrap gap-4 justify-center">
-			{#each products as product}
-				<ProductCard Product={product}></ProductCard>
+<div class="flex">
+	<aside class="">
+		<ul class="menu bg-base-200 rounded-box w-56">
+			<li class="menu-title text-black">Categories</li>
+			<li>
+				<button
+					class={selectedCategoryId === null ? 'active' : ''}
+					on:click={() => selectCategory(null)}>All categories</button
+				>
+			</li>
+			{#each categories as category}
+				<li>
+					<button
+						class={selectedCategoryId === category.id ? 'active' : ''}
+						on:click={() => selectCategory(category.id)}
+					>
+						{category.category_name}
+					</button>
+				</li>
 			{/each}
-		</section>
-		<div class="flex justify-between items-center my-4">
-			<button on:click={() => goToPage(page - 1)} disabled={page === 1} class="btn btn-secondary"
-				>Previous</button
-			>
-			<span>Page {page} of {totalPages}</span>
-			<button
-				on:click={() => goToPage(page + 1)}
-				disabled={page === totalPages}
-				class="btn btn-secondary">Next</button
-			>
-		</div>
-	{:else}
-		<p>No products found</p>
-	{/if}
-</main>
+		</ul>
+	</aside>
+
+	<main class="flex flex-col items-center gap-2">
+		{#if products.length > 0}
+			<section class="flex flex-wrap gap-4 justify-center">
+				{#each products as product}
+					<ProductCard Product={product}></ProductCard>
+				{/each}
+			</section>
+			<div class="flex justify-between items-center my-4">
+				<button on:click={() => goToPage(page - 1)} disabled={page === 1} class="btn btn-secondary">
+					Previous
+				</button>
+				<span>Page {page} of {totalPages}</span>
+				<button
+					on:click={() => goToPage(page + 1)}
+					disabled={page === totalPages}
+					class="btn btn-secondary">Next</button
+				>
+			</div>
+		{:else}
+			<p>No products found</p>
+		{/if}
+	</main>
+</div>
