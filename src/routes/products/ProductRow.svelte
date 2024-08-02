@@ -41,21 +41,20 @@
 
 {#if Product}
 	<tr class="hover">
-		<td class="w-32 min-w-48">
-			<div class="flex items-center gap-3">
-				<figure
-					class="w-32 h-32 flex justify-center items-center bg-base-100 border rounded-box bg-contain"
-				>
-					{#if Product.image}
+		<td class="w-32">
+			<figure
+				class="w-32 h-32 flex justify-center items-center bg-base-100 border rounded-box overflow-clip"
+			>
+				{#if Product.image}
+					<button onclick="modal_product_{Product.id}.showModal()">
 						<img
 							src="https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/{Product.image}"
 							alt="{Product.part_name} - {Product.part_code}"
 							title="{Product.part_name} - {Product.part_code}"
-							class=""
 						/>
-					{/if}
-				</figure>
-			</div>
+					</button>
+				{/if}
+			</figure>
 		</td>
 		<td class="flex-grow">
 			<div>
@@ -99,4 +98,21 @@
 			{/if}
 		</th>
 	</tr>
+
+	<dialog id="modal_product_{Product.id}" class="modal">
+		<div class="modal-box">
+			<form method="dialog">
+				<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+			</form>
+			<h3 class="text-lg font-bold">{Product.part_name}</h3>
+			<img
+				src="https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/{Product.image}"
+				alt="{Product.part_name} - {Product.part_code}"
+				class="w-full h-auto"
+			/>
+		</div>
+		<form method="dialog" class="modal-backdrop">
+			<button>close</button>
+		</form>
+	</dialog>
 {/if}
