@@ -2,6 +2,7 @@
 	import CartPreview from '$lib/components/CartPreview.svelte';
 	import ProductCard from './ProductCard.svelte';
 	import { onMount } from 'svelte';
+	import ProductRow from './ProductRow.svelte';
 
 	/** @type {import('./$types').PageData} */
 	export let data;
@@ -13,7 +14,7 @@
 	const limit = 30;
 	let totalPages = 1;
 	let totalCount = 0;
-	let selectedCategoryId = null; // Track the selected category
+	let selectedCategoryId = null;
 
 	async function fetchProducts(page) {
 		const from = (page - 1) * limit;
@@ -86,7 +87,31 @@
 	</aside>
 
 	<main class="flex flex-col items-center gap-2">
-		{#if products.length > 0}
+		<div class="overflow-x-auto">
+			<table class="table">
+				<!-- head -->
+				<thead>
+					<tr>
+						<th>Image</th>
+						<th>Part details</th>
+						<th>Price</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+					{#if products.length > 0}
+						{#each products as product}
+							<ProductRow Product={product} />
+						{/each}
+					{:else}
+						<tr>
+							<td colspan="4" class="text-center">No products found!</td>
+						</tr>
+					{/if}
+				</tbody>
+			</table>
+		</div>
+		<!-- {#if products.length > 0}
 			<section class="flex flex-wrap gap-4 justify-center">
 				{#each products as product}
 					<ProductCard Product={product}></ProductCard>
@@ -105,6 +130,6 @@
 			</div>
 		{:else}
 			<p>No products found</p>
-		{/if}
+		{/if} -->
 	</main>
 </div>
