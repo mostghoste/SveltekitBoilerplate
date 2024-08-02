@@ -63,8 +63,8 @@
 	});
 </script>
 
-<div class="flex">
-	<aside class="">
+<div class="flex gap-2 p-2">
+	<aside class="mt-10">
 		<ul class="menu bg-base-200 rounded-box w-56">
 			<li class="menu-title text-black">Categories</li>
 			<li>

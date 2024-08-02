@@ -31,7 +31,7 @@
 				<div class="text-sm opacity-50">{Product.part_code}</div>
 			</div>
 		</td>
-		<td class="text-end">{Product.prices[0]?.price.toFixed(2) ?? 'N/A'}€</td>
+		<td class="text-end text-lg font-bold">{Product.prices[0]?.price.toFixed(2) ?? 'N/A'}€</td>
 		<th class="w-48 min-w-48 text-center">
 			<button
 				on:click={() => {
