@@ -35,6 +35,15 @@ function createCart() {
         return [...items, { ...product, quantity: 1 }];
       });
     },
+    updateQuantity: (productId, quantity) => {
+      update((items) => {
+        return items.map(item =>
+          item.id === productId
+            ? { ...item, quantity: quantity }
+            : item
+        );
+      });
+    },
     removeFromCart: (productId) => {
       update((items) => items.filter(item => item.id !== productId));
     },
