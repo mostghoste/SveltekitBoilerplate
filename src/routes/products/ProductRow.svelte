@@ -2,6 +2,7 @@
 	export let Product;
 	import { cart } from '$lib/stores/cart';
 	import { onMount } from 'svelte';
+	import missing from '$lib/assets/images/missing.png';
 
 	let quantity = 0;
 	let productInCart = false;
@@ -53,6 +54,12 @@
 							title="{Product.part_name} - {Product.part_code}"
 						/>
 					</button>
+				{:else}
+					<img
+						src={missing}
+						alt="{Product.part_name} - {Product.part_code}"
+						title="{Product.part_name} - {Product.part_code}"
+					/>
 				{/if}
 			</figure>
 		</td>
@@ -99,20 +106,22 @@
 		</th>
 	</tr>
 
-	<dialog id="modal_product_{Product.id}" class="modal">
-		<div class="modal-box">
-			<form method="dialog">
-				<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+	{#if Product.image}
+		<dialog id="modal_product_{Product.id}" class="modal">
+			<div class="modal-box">
+				<form method="dialog">
+					<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+				</form>
+				<h3 class="text-lg font-bold">{Product.part_name}</h3>
+				<img
+					src="https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/{Product.image}"
+					alt="{Product.part_name} - {Product.part_code}"
+					class="w-full h-auto"
+				/>
+			</div>
+			<form method="dialog" class="modal-backdrop">
+				<button>close</button>
 			</form>
-			<h3 class="text-lg font-bold">{Product.part_name}</h3>
-			<img
-				src="https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/{Product.image}"
-				alt="{Product.part_name} - {Product.part_code}"
-				class="w-full h-auto"
-			/>
-		</div>
-		<form method="dialog" class="modal-backdrop">
-			<button>close</button>
-		</form>
-	</dialog>
+		</dialog>
+	{/if}
 {/if}
