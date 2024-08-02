@@ -8,6 +8,7 @@ export async function load({ locals }) {
     return {
       customerGroupId: null,
       categories: [],
+      totalProductCount: 0,
       error: 'User not authenticated'
     };
   }
@@ -23,6 +24,7 @@ export async function load({ locals }) {
     return {
       customerGroupId: null,
       categories: [],
+      totalProductCount: 0,
       error: 'Failed to fetch user profile or user not found'
     };
   }
@@ -32,16 +34,22 @@ export async function load({ locals }) {
     .from('categories')
     .select('id, category_name');
 
+  // Fetch total product count
+  const { count: totalProductCount, error: countError } = await supabase
+    .from('products')
+    .select('id', { count: 'exact', head: true });
+
   if (categoriesError) {
     console.error('Error fetching categories:', categoriesError);
-    return {
-      customerGroupId: userProfile.customer_group_id,
-      categories: [],
-    };
+  }
+
+  if (countError) {
+    console.error('Error fetching total product count:', countError);
   }
 
   return {
     customerGroupId: userProfile.customer_group_id,
-    categories,
+    categories: categories || [],
+    totalProductCount: totalProductCount || 0,
   };
 }

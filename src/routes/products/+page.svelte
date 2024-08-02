@@ -1,21 +1,21 @@
 <script>
-	import CartPreview from '$lib/components/CartPreview.svelte';
-	import ProductCard from './ProductCard.svelte';
+	// import CartPreview from '$lib/components/CartPreview.svelte';
+	// import ProductCard from './ProductCard.svelte';
 	import { onMount } from 'svelte';
 	import ProductRow from './ProductRow.svelte';
 
 	/** @type {import('./$types').PageData} */
 	export let data;
-	$: ({ supabase, categories } = data);
+	$: ({ supabase, categories, customerGroupId, totalProductCount } = data);
 
 	let products = [];
-	let customerGroupId = data.customerGroupId;
 	let page = 1;
 	const limit = 30;
 	let totalCount = 0;
 	let selectedCategoryId = null;
 	let loading = false;
 	let allLoaded = false;
+	let displayCount = 0;
 
 	async function fetchProducts() {
 		if (loading || allLoaded) return;
@@ -47,6 +47,7 @@
 
 		products = [...products, ...productData];
 		totalCount = count;
+		displayCount = products.length;
 		page++;
 		loading = false;
 
@@ -139,7 +140,11 @@
 			<div class="loading">Loading...</div>
 		{/if}
 
-		{#if !allLoaded}
+		{#if allLoaded}
+			<div class="text-center mt-4">
+				Displaying {displayCount} out of {totalProductCount} products
+			</div>
+		{:else}
 			<div id="infinite-scroll-trigger" class="h-1"></div>
 		{/if}
 	</main>
