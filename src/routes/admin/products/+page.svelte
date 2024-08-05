@@ -1,6 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import PaginationControl from './PaginationControl.svelte';
+	import * as m from '$lib/paraglide/messages.js';
 	export let data;
 	$: ({ supabase } = data);
 
@@ -26,14 +27,14 @@
 				.from('products')
 				.select(
 					`
-					id,
-					category_id,
-					part_name,
-					part_code,
-					image,
-					categories(category_name),
-					prices(price, customer_group_id)
-				`
+                    id,
+                    category_id,
+                    part_name,
+                    part_code,
+                    image,
+                    categories(category_name),
+                    prices(price, customer_group_id)
+                `
 				)
 				.order('id', { ascending: true })
 				.range(from, to);
@@ -215,11 +216,11 @@
 	}
 </script>
 
-<h1 class="font-bold">Product Management</h1>
+<h1 class="font-bold">{m.product_management()}</h1>
 
 <!-- Button to open the modal -->
 <button class="btn mb-4" on:click={() => document.getElementById('product-modal').showModal()}>
-	Add New Product
+	{m.add_new_product()}
 </button>
 
 <!-- Modal -->
@@ -228,7 +229,7 @@
 		<form method="dialog">
 			<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
 		</form>
-		<h3 class="font-bold text-lg">Add a New Product</h3>
+		<h3 class="font-bold text-lg">{m.add_new_product()}</h3>
 		<form
 			method="post"
 			action="?/createProduct"
@@ -236,15 +237,15 @@
 			enctype="multipart/form-data"
 		>
 			<div class="flex flex-col gap-1">
-				<label for="part_name">Part Name <span class="text-red-500">*</span></label>
+				<label for="part_name">{m.part_name()} <span class="text-red-500">*</span></label>
 				<input class="input input-bordered" type="text" id="part_name" name="part_name" required />
 			</div>
 			<div class="flex flex-col gap-1">
-				<label for="part_code">Part Code <span class="text-red-500">*</span></label>
+				<label for="part_code">{m.part_code()} <span class="text-red-500">*</span></label>
 				<input class="input input-bordered" type="text" id="part_code" name="part_code" required />
 			</div>
 			<div class="flex flex-col gap-1">
-				<label for="price">Price <span class="text-red-500">*</span></label>
+				<label for="price">{m.price()} <span class="text-red-500">*</span></label>
 				<input
 					class="input input-bordered"
 					type="number"
@@ -256,20 +257,20 @@
 				/>
 			</div>
 			<div class="flex flex-col gap-1">
-				<label for="category_id">Category <span class="text-red-500">*</span></label>
+				<label for="category_id">{m.category()} <span class="text-red-500">*</span></label>
 				<select class="input input-bordered" id="category_id" name="category_id" required>
-					<option value="" disabled selected>Select a category</option>
+					<option value="" disabled selected>{m.select_category()}</option>
 					{#each categories as category}
 						<option value={category.id}>{category.category_name}</option>
 					{/each}
 				</select>
 			</div>
 			<div class="flex flex-col gap-1">
-				<label for="image">Image File</label>
+				<label for="image">{m.image_file()}</label>
 				<input class="file-input" type="file" id="image" name="image" accept="image/*" />
 			</div>
 
-			<button class="btn btn-success" type="submit">Add Product</button>
+			<button class="btn btn-success" type="submit">{m.add_product()}</button>
 		</form>
 	</div>
 </dialog>
@@ -279,16 +280,16 @@
 	<input
 		type="text"
 		class="input input-bordered w-full"
-		placeholder="Search Part Name"
+		placeholder={m.search_part_name()}
 		bind:value={partNameSearch}
 	/>
 	<input
 		type="text"
 		class="input input-bordered w-full"
-		placeholder="Search Part Code"
+		placeholder={m.search_part_code()}
 		bind:value={partCodeSearch}
 	/>
-	<button type="submit" class="btn btn-success">Search</button>
+	<button type="submit" class="btn btn-success">{m.search()}</button>
 </form>
 
 <!-- Pagination Info and Controls (Top) -->
@@ -299,11 +300,11 @@
 	<table class="table w-auto">
 		<thead>
 			<tr>
-				<th class="w-16">Product ID</th>
-				<th class="w-16">Image</th>
-				<th class="w-32">Category</th>
-				<th class="w-32">Part Name</th>
-				<th class="w-16 border-r-2 border-r-base-300">Part Code</th>
+				<th class="w-16">{m.product_id()}</th>
+				<th class="w-16">{m.image()}</th>
+				<th class="w-32">{m.category()}</th>
+				<th class="w-32">{m.part_name()}</th>
+				<th class="w-16 border-r-2 border-r-base-300">{m.part_code()}</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -332,7 +333,7 @@
 									class="w-16 h-16 object-contain"
 								/>
 							{:else}
-								<span class="flex items-center justify-center w-full h-full"> No Image </span>
+								<span class="flex items-center justify-center w-full h-full"> {m.no_image()} </span>
 							{/if}
 						</form>
 					</td>
@@ -342,7 +343,7 @@
 							bind:value={product.category_id}
 							on:change={(event) => updateField(product.id, 'category_id', event.target.value)}
 						>
-							<option value="" disabled>Select a category</option>
+							<option value="" disabled>{m.select_category()}</option>
 							{#each categories as category}
 								<option value={category.id}>{category.category_name}</option>
 							{/each}

@@ -53,5 +53,17 @@
     "email_required": "Електронна пошта *",
     "active": "Активний",
     "invited": "Запрошений",
-    "unknown": "Невідомо"
+    "unknown": "Невідомо",
+    "product_management": "Керування продуктами",
+	"add_new_product": "Додати новий продукт",
+	"part_name": "Назва частини",
+	"part_code": "Код частини",
+	"select_category": "Виберіть категорію",
+	"image_file": "Файл зображення",
+	"add_product": "Додати продукт",
+	"search_part_name": "Пошук назви частини",
+	"search_part_code": "Пошук коду частини",
+	"product_id": "ID продукту",
+	"no_image": "Немає зображення",
+    "category": "Категорія"
 }

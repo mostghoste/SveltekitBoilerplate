@@ -53,5 +53,17 @@
     "email_required": "Email *",
     "active": "Active",
     "invited": "Invited",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "product_management": "Product Management",
+	"add_new_product": "Add New Product",
+	"part_name": "Part Name",
+	"part_code": "Part Code",
+	"select_category": "Select a category",
+	"image_file": "Image File",
+	"add_product": "Add Product",
+	"search_part_name": "Search Part Name",
+	"search_part_code": "Search Part Code",
+	"product_id": "Product ID",
+	"no_image": "No Image",
+    "category": "Category"
 }

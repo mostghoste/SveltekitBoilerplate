@@ -53,5 +53,17 @@
     "email_required": "El. paštas *",
     "active": "Aktyvus",
     "invited": "Pakviestas",
-    "unknown": "Nežinomas"
+    "unknown": "Nežinomas",
+    "product_management": "Produktų valdymas",
+	"add_new_product": "Pridėti naują produktą",
+	"part_name": "Dalies pavadinimas",
+	"part_code": "Artikulas",
+	"select_category": "Pasirinkite kategoriją",
+	"image_file": "Nuotraukos failas",
+	"add_product": "Pridėti produktą",
+	"search_part_name": "Ieškoti dalies pavadinimo",
+	"search_part_code": "Ieškoti artikulo",
+	"product_id": "Produkto ID",
+	"no_image": "Nėra nuotraukos",
+    "category": "Kategorija"
 }
