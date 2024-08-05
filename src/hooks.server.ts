@@ -1,3 +1,4 @@
+import { i18n } from '$lib/i18n'
 import { createServerClient } from '@supabase/ssr'
 import { type Handle, redirect } from '@sveltejs/kit'
 import { sequence } from '@sveltejs/kit/hooks'
@@ -100,4 +101,4 @@ const authGuard: Handle = async ({ event, resolve }) => {
   return resolve(event)
 }
 
-export const handle: Handle = sequence(supabase, authGuard)
+export const handle: Handle = sequence(i18n.handle(), supabase, authGuard)

@@ -1,4 +1,7 @@
 <script>
+	import { ParaglideJS } from '@inlang/paraglide-sveltekit'
+	import { i18n } from '$lib/i18n'
+
 	import '../app.css';
 	import { invalidate, invalidateAll } from '$app/navigation';
 	import { onMount } from 'svelte';
@@ -44,6 +47,8 @@
 		invalidateAll();
 	};
 </script>
+<ParaglideJS {i18n}>
+
 
 {#if user}
 	<nav class="navbar bg-base-200 sticky top-0 shadow-md z-50">
@@ -109,3 +114,5 @@
 {/if}
 
 <slot></slot>
+
+</ParaglideJS>
