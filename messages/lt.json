@@ -5,5 +5,16 @@
     "manage_products": "Produktų valdymas",
     "manage_customer_groups": "Klientų grupių valdymas",
     "manage_categories": "Kategorijų valdymas",
-    "logout": "Atsijungti"
+    "logout": "Atsijungti",
+    "search": "Paieška",
+    "search_placeholder": "Ieškoti produktų...",
+    "categories": "Kategorijos",
+    "all_categories": "Visos kategorijos",
+    "image": "Nuotrauka",
+    "part_details": "Detalės informacija",
+    "price": "Kaina",
+    "quantity": "Kiekis",
+    "no_products_found": "Produktų nerasta!",
+    "loading": "Įkeliama...",
+    "displaying_products": "Rodomi {displayCount} iš {totalProductCount} produktų"
 }

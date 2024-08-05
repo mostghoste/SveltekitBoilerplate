@@ -5,5 +5,16 @@
     "manage_products": "Manage products",
     "manage_customer_groups": "Manage customer groups",
     "manage_categories": "Manage categories",
-    "logout": "Logout"
+    "logout": "Logout",
+    "search": "Search",
+    "search_placeholder": "Search products...",
+    "categories": "Categories",
+    "all_categories": "All categories",
+    "image": "Image",
+    "part_details": "Part details",
+    "price": "Price",
+    "quantity": "Quantity",
+    "no_products_found": "No products found!",
+    "loading": "Loading...",
+    "displaying_products": "Displaying {displayCount} out of {totalProductCount} products"
 }

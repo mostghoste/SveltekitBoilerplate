@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import ProductRow from './ProductRow.svelte';
 	import { debounce } from 'lodash-es';
+	import * as m from '$lib/paraglide/messages.js';
+	import { languageTag } from '$lib/paraglide/runtime.js';
 
 	/** @type {import('./$types').PageData} */
 	export let data;
@@ -134,21 +136,21 @@
 <div class="flex gap-2 p-2">
 	<aside class="mt-10">
 		<ul class="menu bg-base-200 rounded-box w-56">
-			<li class="menu-title text-black">Search</li>
+			<li class="menu-title text-black">{m.search()}</li>
 			<li>
 				<input
 					type="text"
-					placeholder="Search products..."
+					placeholder={m.search_placeholder()}
 					class="input input-bordered w-full"
 					bind:value={searchTerm}
 					on:input={searchProducts}
 				/>
 			</li>
-			<li class="menu-title text-black">Categories</li>
+			<li class="menu-title text-black">{m.categories()}</li>
 			<li>
 				<button
 					class={selectedCategoryId === null ? 'active' : ''}
-					on:click={() => selectCategory(null)}>All categories</button
+					on:click={() => selectCategory(null)}>{m.all_categories()}</button
 				>
 			</li>
 			{#each categories as category}
@@ -168,10 +170,10 @@
 			<table class="table">
 				<thead class="w-full">
 					<tr>
-						<th class="w-32">Image</th>
-						<th>Part details</th>
-						<th class="w-32 text-end">Price</th>
-						<th class="w-32 text-center">Quantity</th>
+						<th class="w-32">{m.image()}</th>
+						<th>{m.part_details()}</th>
+						<th class="w-32 text-end">{m.price()}</th>
+						<th class="w-32 text-center">{m.quantity()}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -181,7 +183,7 @@
 						{/each}
 					{:else}
 						<tr>
-							<td colspan="4" class="text-center">No products found!</td>
+							<td colspan="4" class="text-center">{m.no_products_found()}</td>
 						</tr>
 					{/if}
 				</tbody>
@@ -189,12 +191,12 @@
 		</div>
 
 		{#if loading}
-			<div class="loading">Loading...</div>
+			<div class="loading">{m.loading()}</div>
 		{/if}
 
 		{#if allLoaded}
 			<div class="text-center mt-4">
-				Displaying {displayCount} out of {totalProductCount} products
+				{m.displaying_products({ displayCount, totalProductCount })}
 			</div>
 		{:else}
 			<div id="infinite-scroll-trigger" class="h-1"></div>
