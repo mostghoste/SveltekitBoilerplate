@@ -1,6 +1,8 @@
 <script>
 	import { cart } from '$lib/stores/cart';
 	import { sendOrderConfirmation } from '$lib/sendOrderConfirmation';
+	import * as m from '$lib/paraglide/messages.js';
+	import { languageTag } from '$lib/paraglide/runtime.js';
 	export let user;
 
 	let CartProducts = [];
@@ -39,6 +41,8 @@
 		? 'items-center justify-center'
 		: ''}"
 >
+	<p>{m.hello_world()}</p>
+	<p>{languageTag()}</p>
 	{#if CartProducts?.length > 0}
 		<ul class="w-full max-h-96 overflow-y-auto overflow-x-hidden">
 			{#each CartProducts as product}
