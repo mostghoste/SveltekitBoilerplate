@@ -1,3 +1,9 @@
 {
-    "$schema": "https://inlang.com/schema/inlang-message-format"
+    "$schema": "https://inlang.com/schema/inlang-message-format",
+    "products": "Products",
+    "manage_users": "Manage users",
+    "manage_products": "Manage products",
+    "manage_customer_groups": "Manage customer groups",
+    "manage_categories": "Manage categories",
+    "logout": "Logout"
 }

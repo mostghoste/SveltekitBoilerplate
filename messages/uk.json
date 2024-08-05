@@ -1,3 +1,9 @@
 {
-    "$schema": "https://inlang.com/schema/inlang-message-format"
+    "$schema": "https://inlang.com/schema/inlang-message-format",
+    "products": "Продукти",
+    "manage_users": "Керування користувачами",
+    "manage_products": "Керування продуктами",
+    "manage_customer_groups": "Керування групами клієнтів",
+    "manage_categories": "Керування категоріями",
+    "logout": "Вийти"
 }
