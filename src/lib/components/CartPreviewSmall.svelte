@@ -1,6 +1,8 @@
 <script>
 	import { cart } from '$lib/stores/cart';
 	import { sendOrderConfirmation } from '$lib/sendOrderConfirmation';
+	import { i18n } from '$lib/i18n';
+	import * as m from '$lib/paraglide/messages.js';
 	export let user;
 
 	let CartProducts = [];
@@ -19,16 +21,16 @@
 		try {
 			const email = user.email;
 			await sendOrderConfirmation(email, CartProducts);
-			alert('Order confirmed and email sent!');
+			alert(m.order_confirmed());
 			clearCart();
 		} catch (error) {
-			alert('Failed to send order confirmation email');
+			alert(m.order_failed());
 			console.error(error);
 		}
 	}
 
 	function confirmClearCart() {
-		if (window.confirm('Are you sure you want to clear the cart?')) {
+		if (window.confirm(m.confirm_clear_cart())) {
 			clearCart();
 		}
 	}
@@ -73,20 +75,20 @@
 				</li>
 			{/each}
 		</ul>
-		<p class="text-end mt-1">Cart total: <strong>{total.toFixed(2)}€</strong></p>
+		<p class="text-end mt-1">{m.cart_total()} <strong>{total.toFixed(2)}€</strong></p>
 		<footer class="w-full flex gap-2">
 			<button
 				class="btn btn-warning btn-sm"
 				disabled={CartProducts.length <= 0}
-				on:click={confirmClearCart}>Clear Cart</button
+				on:click={confirmClearCart}>{m.clear_cart()}</button
 			>
 			<button
 				class="btn btn-success btn-sm flex-grow"
 				disabled={CartProducts.length <= 0}
-				on:click={confirmOrder}>Checkout</button
+				on:click={confirmOrder}>{m.checkout()}</button
 			>
 		</footer>
 	{:else}
-		<p>Your cart is <strong>empty</strong>!</p>
+		<p>{m.cart_empty()}</p>
 	{/if}
 </section>
