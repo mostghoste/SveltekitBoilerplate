@@ -67,5 +67,15 @@
 	"no_image": "Немає зображення",
     "category": "Категорія",
     "pagination_info": "Сторінка {page} з {totalPages}",
-	"total_products": "Всього продуктів: {totalCount}"
+	"total_products": "Всього продуктів: {totalCount}",
+	"id": "ID",
+	"group_name": "Назва групи",
+	"group_description": "Опис групи",
+	"actions": "Дії",
+	"no_description": "Немає опису",
+	"delete_button": "Видалити",
+	"confirm_delete_group": "Ви впевнені, що хочете видалити цю групу? Усі клієнти, призначені до цієї групи, будуть повернуті до стандартної групи, а ціни, призначені до цієї групи, будуть видалені.",
+	"add_new_customer_group": "Додати нову групу клієнтів",
+	"add_group": "Додати групу",
+	"group_name_required": "Назва групи *"
 }

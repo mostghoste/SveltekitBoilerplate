@@ -1,33 +1,35 @@
 <script>
+	import * as m from '$lib/paraglide/messages.js';
+
 	/** @type {import('./$types').PageData} */
 	export let data;
 </script>
 
-<h1 class="font-bold">Manage customer groups</h1>
+<h1 class="font-bold">{m.manage_customer_groups()}</h1>
 <table class="table w-full">
 	<thead>
 		<tr>
-			<th class="">ID</th>
-			<th class="">Group Name</th>
-			<th class="">Group Description</th>
-			<th class="">Actions</th>
+			<th>{m.id()}</th>
+			<th>{m.group_name()}</th>
+			<th>{m.group_description()}</th>
+			<th>{m.actions()}</th>
 		</tr>
 	</thead>
 	<tbody>
 		{#each data.customerGroups as group}
 			<tr>
-				<td class="">{group.id}</td>
-				<td class="">{group.group_name}</td>
-				<td class="">{group.group_description || 'No description'}</td>
-				<td class="">
+				<td>{group.id}</td>
+				<td>{group.group_name}</td>
+				<td>{group.group_description || m.no_description()}</td>
+				<td>
 					{#if group.group_name !== 'Default'}
 						<form
 							method="post"
 							action="?/deleteCustomerGroup"
-							onsubmit="return confirm('Are you sure you want to delete this group? All customers assigned to this group will be returned to default, and prices assigned to this group will be deleted.');"
+							onsubmit="return confirm('{m.confirm_delete_group()}');"
 						>
 							<input type="hidden" name="group_id" value={group.id} />
-							<button class="btn btn-sm btn-error" type="submit">Delete</button>
+							<button class="btn btn-sm btn-error" type="submit">{m.delete_button()}</button>
 						</form>
 					{/if}
 				</td>
@@ -38,13 +40,13 @@
 
 <!-- Form to add a new customer group -->
 <form method="post" action="?/addCustomerGroup" class="flex gap-2 flex-col p-2 border w-96 mt-4">
-	<h2 class="font-bold">Add a new customer group</h2>
+	<h2 class="font-bold">{m.add_new_customer_group()}</h2>
 	<div class="flex flex-col gap-1">
-		<label for="group_name">Group Name <span class="text-red-500">*</span></label>
+		<label for="group_name">{m.group_name_required()}</label>
 		<input class="input input-bordered" type="text" id="group_name" name="group_name" required />
 	</div>
 	<div class="flex flex-col gap-1">
-		<label for="group_description">Group Description</label>
+		<label for="group_description">{m.group_description()}</label>
 		<input
 			class="input input-bordered"
 			type="text"
@@ -52,5 +54,5 @@
 			name="group_description"
 		/>
 	</div>
-	<button class="btn btn-success" type="submit">Add Group</button>
+	<button class="btn btn-success" type="submit">{m.add_group()}</button>
 </form>
