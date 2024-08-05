@@ -1,6 +1,7 @@
 <script>
 	import { cart } from '$lib/stores/cart';
 	import { sendOrderConfirmation } from '$lib/sendOrderConfirmation';
+	export let user;
 
 	let CartProducts = [];
 	$: cart.subscribe((value) => {
@@ -16,7 +17,7 @@
 
 	async function confirmOrder() {
 		try {
-			const email = 'sarunas969@gmail.com';
+			const email = user.email;
 			await sendOrderConfirmation(email, CartProducts);
 			alert('Order confirmed and email sent!');
 			clearCart();

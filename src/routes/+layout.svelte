@@ -88,7 +88,7 @@
 					{/if}
 				</button>
 				<div class="card card-compact dropdown-content bg-base-100 z-[1] mt-3 w-72 shadow">
-					<CartPreviewSmall></CartPreviewSmall>
+					<CartPreviewSmall {user}></CartPreviewSmall>
 				</div>
 			</div>
 
