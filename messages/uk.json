@@ -65,5 +65,7 @@
 	"search_part_code": "Пошук коду частини",
 	"product_id": "ID продукту",
 	"no_image": "Немає зображення",
-    "category": "Категорія"
+    "category": "Категорія",
+    "pagination_info": "Сторінка {page} з {totalPages}",
+	"total_products": "Всього продуктів: {totalCount}"
 }

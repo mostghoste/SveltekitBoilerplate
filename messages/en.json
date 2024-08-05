@@ -65,5 +65,7 @@
 	"search_part_code": "Search Part Code",
 	"product_id": "Product ID",
 	"no_image": "No Image",
-    "category": "Category"
+    "category": "Category",
+    "pagination_info": "Page {page} of {totalPages}",
+	"total_products": "Total Products: {totalCount}"
 }

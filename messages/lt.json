@@ -65,5 +65,7 @@
 	"search_part_code": "Ieškoti artikulo",
 	"product_id": "Produkto ID",
 	"no_image": "Nėra nuotraukos",
-    "category": "Kategorija"
+    "category": "Kategorija",
+    "pagination_info": "Puslapis {page} iš {totalPages}",
+	"total_products": "Iš viso produktų: {totalCount}"
 }
