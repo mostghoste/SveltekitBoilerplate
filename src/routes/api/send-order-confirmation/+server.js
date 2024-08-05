@@ -31,7 +31,7 @@ export async function POST({ request, locals }) {
     const productIds = cart.map(item => item.id);
     const { data: productData, error: productError } = await supabase
       .from('products')
-      .select('id, prices!inner(price, customer_group_id)')
+      .select('id, part_name, prices!inner(price, customer_group_id)')
       .in('id', productIds)
       .eq('prices.customer_group_id', customerGroupId);
 
@@ -39,7 +39,7 @@ export async function POST({ request, locals }) {
       return json({ message: 'Error verifying product prices' }, { status: 500 });
     }
 
-    // Validate cart prices
+    // Validate cart prices and calculate total amount
     let totalAmount = 0;
     const verifiedCart = cart.map(item => {
       const product = productData.find(p => p.id === item.id);
@@ -48,26 +48,26 @@ export async function POST({ request, locals }) {
       }
 
       const priceRecord = product.prices.find(p => p.customer_group_id === customerGroupId);
-      if (!priceRecord || priceRecord.price !== item.prices[0].price) {
-        throw new Error(`Price mismatch for product ID ${item.id}`);
+      if (!priceRecord) {
+        throw new Error(`Price not found for product ID ${item.id} and group ID ${customerGroupId}`);
       }
 
       totalAmount += item.quantity * priceRecord.price;
       return {
         ...item,
+        part_name: product.part_name,
         verifiedPrice: priceRecord.price
       };
     });
 
-    // Convert total amount to string with two decimals
-    totalAmount = totalAmount.toFixed(2);
+    totalAmount = totalAmount.toFixed(2); // Format total amount
 
     // Prepare the order details for the email
     const orderDetails = verifiedCart.map(item =>
       `${item.part_name} (x${item.quantity}) - ${item.verifiedPrice}€ each`
     ).join('\n');
 
-    // Send emails
+    // Send order confirmation emails
     const customerEmailResponse = await resend.emails.send({
       from: `${EMAIL_SENDER_NAME} <${EMAIL_SENDER_ADDRESS}>`,
       to: [email],
