@@ -83,5 +83,8 @@
 	"no_categories_available": "Категорії відсутні.",
 	"add_new_category": "Додати нову категорію",
 	"category_name_required": "Назва категорії *",
-	"add_category": "Додати категорію"
+	"add_category": "Додати категорію",
+	"login": "Увійти",
+	"email_placeholder": "Електронна пошта",
+	"password_placeholder": "Пароль"
 }

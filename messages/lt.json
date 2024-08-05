@@ -83,5 +83,8 @@
 	"no_categories_available": "Nėra prieinamų kategorijų.",
 	"add_new_category": "Pridėti naują kategoriją",
 	"category_name_required": "Kategorijos pavadinimas *",
-	"add_category": "Pridėti kategoriją"
+	"add_category": "Pridėti kategoriją",
+	"login": "Prisijungti",
+	"email_placeholder": "El. paštas",
+	"password_placeholder": "Slaptažodis"
 }
