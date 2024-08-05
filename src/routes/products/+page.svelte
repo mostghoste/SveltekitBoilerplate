@@ -1,8 +1,7 @@
 <script>
-	// import CartPreview from '$lib/components/CartPreview.svelte';
-	// import ProductCard from './ProductCard.svelte';
 	import { onMount } from 'svelte';
 	import ProductRow from './ProductRow.svelte';
+	import { debounce } from 'lodash-es';
 
 	/** @type {import('./$types').PageData} */
 	export let data;
@@ -16,6 +15,7 @@
 	let loading = false;
 	let allLoaded = false;
 	let displayCount = 0;
+	let searchTerm = '';
 
 	async function fetchProducts() {
 		if (loading || allLoaded) return;
@@ -83,6 +83,48 @@
 		if (target) observer.observe(target);
 	}
 
+	const searchProducts = debounce(async () => {
+		products = [];
+		page = 1;
+		allLoaded = false;
+
+		let query = supabase
+			.from('products')
+			.select(
+				'id, image, part_code, part_name, category_id, categories(category_name), prices(price)',
+				{ count: 'exact' }
+			)
+			.eq('prices.customer_group_id', customerGroupId)
+			.range(0, limit - 1);
+
+		if (searchTerm.length >= 2) {
+			query = query.or(`part_name.ilike.%${searchTerm}%,part_code.ilike.%${searchTerm}%`);
+		}
+
+		if (selectedCategoryId) {
+			query = query.eq('category_id', selectedCategoryId);
+		}
+
+		const { data: productData, error, count } = await query;
+
+		if (error) {
+			console.error('Error searching products:', error);
+			return;
+		}
+
+		products = productData;
+		totalCount = count;
+		displayCount = products.length;
+
+		if (products.length >= totalCount) {
+			allLoaded = true;
+		}
+	}, 300);
+
+	$: if (searchTerm !== undefined) {
+		searchProducts();
+	}
+
 	onMount(() => {
 		fetchProducts();
 		setupIntersectionObserver();
@@ -92,6 +134,16 @@
 <div class="flex gap-2 p-2">
 	<aside class="mt-10">
 		<ul class="menu bg-base-200 rounded-box w-56">
+			<li class="menu-title text-black">Search</li>
+			<li>
+				<input
+					type="text"
+					placeholder="Search products..."
+					class="input input-bordered w-full"
+					bind:value={searchTerm}
+					on:input={searchProducts}
+				/>
+			</li>
 			<li class="menu-title text-black">Categories</li>
 			<li>
 				<button
