@@ -1,4 +1,6 @@
 <script>
+	import * as m from '$lib/paraglide/messages.js';
+
 	/** @type {import('./$types').PageData} */
 	export let data;
 	$: ({ supabase } = data);
@@ -56,13 +58,13 @@
 	}
 </script>
 
-<h1 class="font-bold">Manage Categories</h1>
+<h1 class="font-bold">{m.manage_categories()}</h1>
 <table class="table w-full">
 	<thead>
 		<tr>
-			<th>ID</th>
-			<th>Category Name</th>
-			<th>Actions</th>
+			<th>{m.id()}</th>
+			<th>{m.category_name()}</th>
+			<th>{m.actions()}</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -82,17 +84,17 @@
 						<form
 							method="post"
 							action="?/deleteCategory"
-							onsubmit="return confirm('Are you sure you want to delete this category?');"
+							onsubmit="return confirm('{m.confirm_delete_category()}');"
 						>
 							<input type="hidden" name="category_id" value={category.id} />
-							<button class="btn btn-sm btn-error" type="submit">Delete</button>
+							<button class="btn btn-sm btn-error" type="submit">{m.delete_button()}</button>
 						</form>
 					</td>
 				</tr>
 			{/each}
 		{:else}
 			<tr>
-				<td colspan="4">No categories available.</td>
+				<td colspan="3">{m.no_categories_available()}</td>
 			</tr>
 		{/if}
 	</tbody>
@@ -100,9 +102,9 @@
 
 <!-- Form to add a new category -->
 <form method="post" action="?/addCategory" class="flex gap-2 flex-col p-2 border w-96 mt-4">
-	<h2 class="font-bold">Add a new category</h2>
+	<h2 class="font-bold">{m.add_new_category()}</h2>
 	<div class="flex flex-col gap-1">
-		<label for="category_name">Category Name <span class="text-red-500">*</span></label>
+		<label for="category_name">{m.category_name_required()}</label>
 		<input
 			class="input input-bordered"
 			type="text"
@@ -111,5 +113,5 @@
 			required
 		/>
 	</div>
-	<button class="btn btn-success" type="submit">Add Category</button>
+	<button class="btn btn-success" type="submit">{m.add_category()}</button>
 </form>

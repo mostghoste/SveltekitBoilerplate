@@ -77,5 +77,11 @@
 	"confirm_delete_group": "Ar tikrai norite ištrinti šią grupę? Visi šiai grupei priskirti klientai bus grąžinti į numatytąją grupę, o šiai grupei priskirtos kainos bus ištrintos.",
 	"add_new_customer_group": "Pridėti naują klientų grupę",
 	"add_group": "Pridėti grupę",
-	"group_name_required": "Grupės pavadinimas *"
+	"group_name_required": "Grupės pavadinimas *",
+	"category_name": "Kategorijos pavadinimas",
+	"confirm_delete_category": "Ar tikrai norite ištrinti šią kategoriją?",
+	"no_categories_available": "Nėra prieinamų kategorijų.",
+	"add_new_category": "Pridėti naują kategoriją",
+	"category_name_required": "Kategorijos pavadinimas *",
+	"add_category": "Pridėti kategoriją"
 }
