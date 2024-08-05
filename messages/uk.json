@@ -16,5 +16,7 @@
     "quantity": "Кількість",
     "no_products_found": "Продуктів не знайдено!",
     "loading": "Завантаження...",
-    "displaying_products": "Показано {displayCount} з {totalProductCount} продуктів"
+    "displaying_products": "Показано {displayCount} з {totalProductCount} продуктів",
+    "add_to_cart": "Додати",
+	"close": "Закрити"
 }

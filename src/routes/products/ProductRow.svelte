@@ -1,9 +1,10 @@
 <script>
-	export let Product;
 	import { cart } from '$lib/stores/cart';
 	import { onMount } from 'svelte';
 	import missing from '$lib/assets/images/missing.png';
+	import * as m from '$lib/paraglide/messages.js';
 
+	export let Product;
 	let quantity = 0;
 	let productInCart = false;
 
@@ -78,6 +79,7 @@
 					value={quantity}
 					on:input={handleQuantityChange}
 					class="input input-bordered input-sm w-full h-12"
+					aria-label={m.quantity()}
 				/>
 			{:else}
 				<button
@@ -100,7 +102,7 @@
 							d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
 						/>
 					</svg>
-					Add to cart
+					{m.add_to_cart()}
 				</button>
 			{/if}
 		</th>
@@ -120,7 +122,7 @@
 				/>
 			</div>
 			<form method="dialog" class="modal-backdrop">
-				<button>close</button>
+				<button>{m.close()}</button>
 			</form>
 		</dialog>
 	{/if}

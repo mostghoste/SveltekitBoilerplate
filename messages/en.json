@@ -16,5 +16,7 @@
     "quantity": "Quantity",
     "no_products_found": "No products found!",
     "loading": "Loading...",
-    "displaying_products": "Displaying {displayCount} out of {totalProductCount} products"
+    "displaying_products": "Displaying {displayCount} out of {totalProductCount} products",
+    "add_to_cart": "Add to cart",
+	"close": "Close"
 }

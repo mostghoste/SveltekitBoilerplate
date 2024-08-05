@@ -16,5 +16,7 @@
     "quantity": "Kiekis",
     "no_products_found": "Produktų nerasta!",
     "loading": "Įkeliama...",
-    "displaying_products": "Rodomi {displayCount} iš {totalProductCount} produktų"
+    "displaying_products": "Rodomi {displayCount} iš {totalProductCount} produktų",
+    "add_to_cart": "Į krepšelį",
+	"close": "Uždaryti"
 }
