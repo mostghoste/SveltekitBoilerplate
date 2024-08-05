@@ -47,7 +47,7 @@
 				class="w-32 h-32 flex justify-center items-center bg-base-100 border rounded-box overflow-clip"
 			>
 				{#if Product.image}
-					<button onclick="modal_product_{Product.id}.showModal()">
+					<button onclick="modal_product_{Product.id}.showModal()" class="w-full h-full">
 						<img
 							src="https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/{Product.image}"
 							alt="{Product.part_name} - {Product.part_code}"
