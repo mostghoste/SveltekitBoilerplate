@@ -2,6 +2,7 @@
 	import { ParaglideJS } from '@inlang/paraglide-sveltekit';
 	import { i18n } from '$lib/i18n';
 	import * as m from '$lib/paraglide/messages.js';
+	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte'; // Import the language switcher
 
 	import '../app.css';
 	import { invalidate, invalidateAll } from '$app/navigation';
@@ -11,8 +12,8 @@
 	import { cart } from '$lib/stores/cart';
 
 	let CartProducts = [];
-	let isPing = false; // State for ping animation
-	let pingTimeout; // Timeout for removing the animation class
+	let isPing = false;
+	let pingTimeout;
 
 	cart.subscribe((value) => {
 		if (value.length > CartProducts.length) {
@@ -20,7 +21,7 @@
 			clearTimeout(pingTimeout);
 			pingTimeout = setTimeout(() => {
 				isPing = false;
-			}, 1000); // Duration of the animation
+			}, 1000);
 		}
 		CartProducts = value;
 	});
@@ -59,6 +60,7 @@
 				</a>
 			</div>
 
+			<LanguageSwitcher />
 			<ul class="flex space-x-2">
 				<li class="btn btn-ghost"><a href={i18n.resolveRoute('/products')}>{m.products()}</a></li>
 				{#if role === 'admin'}
