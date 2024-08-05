@@ -1,21 +1,73 @@
 import { json } from '@sveltejs/kit';
 import { Resend } from 'resend';
-import { RESEND_API_KEY, EMAIL_SENDER_ADDRESS, EMAIL_SENDER_NAME, EMAIL_SALES_RECIPIENT } from '$env/static/private'
+import { RESEND_API_KEY, EMAIL_SENDER_ADDRESS, EMAIL_SENDER_NAME, EMAIL_SALES_RECIPIENT } from '$env/static/private';
 
 const resend = new Resend(RESEND_API_KEY);
 
-export async function POST({ request }) {
-  const { email, cart } = await request.json();
-
-  // Prepare the order details to include in the email
-  const orderDetails = cart.map((item) =>
-    `${item.part_name} (x${item.quantity}) - ${item.price.toFixed(2)}€ each`
-  ).join('\n');
-
-  const totalAmount = cart.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2);
-
-  // Send the email to the customer
+export async function POST({ request, locals }) {
   try {
+    const { email, cart } = await request.json();
+
+    if (!email || !Array.isArray(cart) || cart.length === 0) {
+      return json({ message: 'Invalid request payload' }, { status: 400 });
+    }
+
+    const supabase = locals.supabase;
+
+    // Fetch user's customer group based on email
+    const { data: userProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('customer_group_id')
+      .eq('email', email)
+      .single();
+
+    if (profileError || !userProfile) {
+      return json({ message: 'User not found' }, { status: 404 });
+    }
+
+    const customerGroupId = userProfile.customer_group_id;
+
+    // Verify prices from the database
+    const productIds = cart.map(item => item.id);
+    const { data: productData, error: productError } = await supabase
+      .from('products')
+      .select('id, prices!inner(price, customer_group_id)')
+      .in('id', productIds)
+      .eq('prices.customer_group_id', customerGroupId);
+
+    if (productError) {
+      return json({ message: 'Error verifying product prices' }, { status: 500 });
+    }
+
+    // Validate cart prices
+    let totalAmount = 0;
+    const verifiedCart = cart.map(item => {
+      const product = productData.find(p => p.id === item.id);
+      if (!product) {
+        throw new Error(`Product ID ${item.id} not found`);
+      }
+
+      const priceRecord = product.prices.find(p => p.customer_group_id === customerGroupId);
+      if (!priceRecord || priceRecord.price !== item.prices[0].price) {
+        throw new Error(`Price mismatch for product ID ${item.id}`);
+      }
+
+      totalAmount += item.quantity * priceRecord.price;
+      return {
+        ...item,
+        verifiedPrice: priceRecord.price
+      };
+    });
+
+    // Convert total amount to string with two decimals
+    totalAmount = totalAmount.toFixed(2);
+
+    // Prepare the order details for the email
+    const orderDetails = verifiedCart.map(item =>
+      `${item.part_name} (x${item.quantity}) - ${item.verifiedPrice}€ each`
+    ).join('\n');
+
+    // Send emails
     const customerEmailResponse = await resend.emails.send({
       from: `${EMAIL_SENDER_NAME} <${EMAIL_SENDER_ADDRESS}>`,
       to: [email],
@@ -30,7 +82,6 @@ export async function POST({ request }) {
       return json({ message: 'Failed to send email to customer' }, { status: 500 });
     }
 
-    // Send the email to the sales recipient
     const salesEmailResponse = await resend.emails.send({
       from: `${EMAIL_SENDER_NAME} <${EMAIL_SENDER_ADDRESS}>`,
       to: [EMAIL_SALES_RECIPIENT],
@@ -46,10 +97,9 @@ export async function POST({ request }) {
       return json({ message: 'Failed to send email to sales recipient' }, { status: 500 });
     }
 
-    console.log({ customerEmailResponse, salesEmailResponse });
     return json({ message: 'Emails sent successfully' });
   } catch (error) {
-    console.error('Error sending email:', error);
-    return json({ message: 'Failed to send emails' }, { status: 500 });
+    console.error('Error:', error.message);
+    return json({ message: 'Failed to process request' }, { status: 500 });
   }
 }
