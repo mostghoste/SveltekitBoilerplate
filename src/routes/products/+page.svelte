@@ -18,6 +18,7 @@
 	let allLoaded = false;
 	let displayCount = 0;
 	let searchTerm = '';
+	let currentLanguageId = undefined;
 
 	async function fetchProducts() {
 		if (loading || allLoaded) return;
@@ -30,11 +31,10 @@
 			.from('products')
 			.select(
 				`
-				id, image, part_code, part_name, category_id, 
-				categories(category_name), 
-				prices(price), 
-				product_translations(part_name)
-			`,
+            id, image, part_code, part_name, category_id, 
+            categories(category_name), 
+            prices(price)
+        `,
 				{ count: 'exact' }
 			)
 			.eq('prices.customer_group_id', customerGroupId)
@@ -44,9 +44,18 @@
 			query = query.eq('category_id', selectedCategoryId);
 		}
 
-		if (languageId) {
-			// Join with product_translations to get translated names
-			query = query.eq('product_translations.language_id', languageId);
+		if (languageId !== undefined) {
+			// Join with product_translations to get translated names for non-English languages
+			query = query
+				.select(
+					`
+            id, image, part_code, part_name, category_id, 
+            categories(category_name), 
+            prices(price),
+            product_translations!inner(part_name)
+        `
+				)
+				.eq('product_translations.language_id', languageId);
 		}
 
 		const { data: productData, error, count } = await query;
@@ -57,14 +66,14 @@
 			return;
 		}
 
-		products = [
-			...products,
-			...productData.map((product) => ({
-				...product,
-				// Use translated name if available, otherwise default to part_name
-				part_name: product.product_translations?.[0]?.part_name || product.part_name
-			}))
-		];
+		products = productData.map((product) => ({
+			...product,
+			part_name:
+				languageId !== undefined
+					? product.product_translations[0]?.part_name || product.part_name
+					: product.part_name
+		}));
+
 		totalCount = count;
 		displayCount = products.length;
 		page++;
@@ -73,6 +82,14 @@
 		if (products.length >= totalCount) {
 			allLoaded = true;
 		}
+	}
+
+	$: if (languageId !== currentLanguageId) {
+		currentLanguageId = languageId;
+		products = [];
+		page = 1;
+		allLoaded = false;
+		fetchProducts();
 	}
 
 	function selectCategory(categoryId) {
