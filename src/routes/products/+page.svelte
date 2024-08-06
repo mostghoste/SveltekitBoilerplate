@@ -29,7 +29,12 @@
 		let query = supabase
 			.from('products')
 			.select(
-				'id, image, part_code, part_name, category_id, categories(category_name), prices(price)',
+				`
+				id, image, part_code, part_name, category_id, 
+				categories(category_name), 
+				prices(price), 
+				product_translations(part_name)
+			`,
 				{ count: 'exact' }
 			)
 			.eq('prices.customer_group_id', customerGroupId)
@@ -37,6 +42,11 @@
 
 		if (selectedCategoryId) {
 			query = query.eq('category_id', selectedCategoryId);
+		}
+
+		if (languageId) {
+			// Join with product_translations to get translated names
+			query = query.eq('product_translations.language_id', languageId);
 		}
 
 		const { data: productData, error, count } = await query;
@@ -47,7 +57,14 @@
 			return;
 		}
 
-		products = [...products, ...productData];
+		products = [
+			...products,
+			...productData.map((product) => ({
+				...product,
+				// Use translated name if available, otherwise default to part_name
+				part_name: product.product_translations?.[0]?.part_name || product.part_name
+			}))
+		];
 		totalCount = count;
 		displayCount = products.length;
 		page++;
@@ -93,7 +110,12 @@
 		let query = supabase
 			.from('products')
 			.select(
-				'id, image, part_code, part_name, category_id, categories(category_name), prices(price)',
+				`
+				id, image, part_code, part_name, category_id, 
+				categories(category_name), 
+				prices(price), 
+				product_translations(part_name)
+			`,
 				{ count: 'exact' }
 			)
 			.eq('prices.customer_group_id', customerGroupId)
@@ -107,6 +129,11 @@
 			query = query.eq('category_id', selectedCategoryId);
 		}
 
+		if (languageId) {
+			// Join with product_translations to get translated names
+			query = query.eq('product_translations.language_id', languageId);
+		}
+
 		const { data: productData, error, count } = await query;
 
 		if (error) {
@@ -114,7 +141,10 @@
 			return;
 		}
 
-		products = productData;
+		products = productData.map((product) => ({
+			...product,
+			part_name: product.product_translations?.[0]?.part_name || product.part_name
+		}));
 		totalCount = count;
 		displayCount = products.length;
 
