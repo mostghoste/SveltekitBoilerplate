@@ -82,7 +82,7 @@
 	"confirm_delete_category": "Ar tikrai norite ištrinti šią kategoriją?",
 	"no_categories_available": "Nėra prieinamų kategorijų.",
 	"add_new_category": "Pridėti naują kategoriją",
-	"category_name_required": "Kategorijos pavadinimas *",
+	"category_name_required": "Kategorijos pavadinimas (en) *",
 	"add_category": "Pridėti kategoriją",
 	"login": "Prisijungti",
 	"email_placeholder": "El. paštas",

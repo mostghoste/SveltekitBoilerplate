@@ -82,7 +82,7 @@
 	"confirm_delete_category": "Ви впевнені, що хочете видалити цю категорію?",
 	"no_categories_available": "Категорії відсутні.",
 	"add_new_category": "Додати нову категорію",
-	"category_name_required": "Назва категорії *",
+	"category_name_required": "Назва категорії (en) *",
 	"add_category": "Додати категорію",
 	"login": "Увійти",
 	"email_placeholder": "Електронна пошта",

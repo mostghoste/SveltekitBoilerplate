@@ -82,7 +82,7 @@
 	"confirm_delete_category": "Are you sure you want to delete this category?",
 	"no_categories_available": "No categories available.",
 	"add_new_category": "Add a new category",
-	"category_name_required": "Category Name *",
+	"category_name_required": "Category Name (en) *",
 	"add_category": "Add Category",
 	"login": "Log in",
 	"email_placeholder": "Email",
