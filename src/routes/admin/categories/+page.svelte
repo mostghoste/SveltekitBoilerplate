@@ -5,7 +5,7 @@
 	export let data;
 	$: ({ supabase } = data);
 
-	let categories = data.categories || [];
+	let { categories, languages, categoryTranslations } = data;
 
 	async function updateCategoryName(categoryId, newName) {
 		if (!newName.trim()) {
@@ -35,6 +35,38 @@
 		}
 	}
 
+	async function updateTranslation(categoryId, languageId, newName) {
+		if (!newName.trim()) {
+			setTranslationStatus(categoryId, languageId, 'error');
+			return;
+		}
+
+		try {
+			const { error } = await supabase.from('category_translations').upsert(
+				{
+					category_id: categoryId,
+					language_id: languageId,
+					category_name: newName
+				},
+				{ onConflict: ['category_id', 'language_id'] }
+			);
+
+			if (error) {
+				setTranslationStatus(categoryId, languageId, 'error');
+				console.error('Error updating translation:', error);
+				return;
+			}
+
+			setTranslationStatus(categoryId, languageId, 'success');
+			setTimeout(() => {
+				clearTranslationStatus(categoryId, languageId);
+			}, 3000);
+		} catch (error) {
+			setTranslationStatus(categoryId, languageId, 'error');
+			console.error('Error updating translation:', error);
+		}
+	}
+
 	function setCategoryStatus(categoryId, status) {
 		const category = categories.find((cat) => cat.id === categoryId);
 		if (category) {
@@ -51,6 +83,26 @@
 		}
 	}
 
+	function setTranslationStatus(categoryId, languageId, status) {
+		const translation = categoryTranslations.find(
+			(trans) => trans.category_id === categoryId && trans.language_id === languageId
+		);
+		if (translation) {
+			translation.status = status;
+			categoryTranslations = [...categoryTranslations];
+		}
+	}
+
+	function clearTranslationStatus(categoryId, languageId) {
+		const translation = categoryTranslations.find(
+			(trans) => trans.category_id === categoryId && trans.language_id === languageId
+		);
+		if (translation) {
+			translation.status = '';
+			categoryTranslations = [...categoryTranslations];
+		}
+	}
+
 	function getStatusClass(status) {
 		if (status === 'success') return 'border-green-500';
 		if (status === 'error') return 'border-red-500';
@@ -64,6 +116,9 @@
 		<tr>
 			<th>{m.id()}</th>
 			<th>{m.category_name()}</th>
+			{#each languages as language}
+				<th>{language.name}</th>
+			{/each}
 			<th>{m.actions()}</th>
 		</tr>
 	</thead>
@@ -80,6 +135,23 @@
 							on:change={(e) => updateCategoryName(category.id, e.target.value)}
 						/>
 					</td>
+					{#each languages as language}
+						<td>
+							<input
+								type="text"
+								value={categoryTranslations.find(
+									(trans) => trans.category_id === category.id && trans.language_id === language.id
+								)?.category_name || ''}
+								class="input input-bordered {getStatusClass(
+									categoryTranslations.find(
+										(trans) =>
+											trans.category_id === category.id && trans.language_id === language.id
+									)?.status
+								)}"
+								on:change={(e) => updateTranslation(category.id, language.id, e.target.value)}
+							/>
+						</td>
+					{/each}
 					<td>
 						<form
 							method="post"
@@ -94,7 +166,7 @@
 			{/each}
 		{:else}
 			<tr>
-				<td colspan="3">{m.no_categories_available()}</td>
+				<td colspan={languages.length + 3}>{m.no_categories_available()}</td>
 			</tr>
 		{/if}
 	</tbody>

@@ -1,4 +1,3 @@
-// src/routes/admin/categories/+page.server.js
 import { fail } from '@sveltejs/kit';
 
 /** @type {import('./$types').PageServerLoad} */
@@ -11,13 +10,26 @@ export const load = async ({ locals }) => {
     .select('*')
     .order('id', { ascending: true });
 
-  if (categoriesError) {
-    console.error('Error fetching categories:', categoriesError);
-    return { categories: [] };
+  // Fetch languages
+  const { data: languages, error: languagesError } = await supabase
+    .from('languages')
+    .select('*')
+    .order('id', { ascending: true });
+
+  // Fetch category translations
+  const { data: categoryTranslations, error: translationsError } = await supabase
+    .from('category_translations')
+    .select('*');
+
+  if (categoriesError || languagesError || translationsError) {
+    console.error('Error fetching data:', categoriesError, languagesError, translationsError);
+    return { categories: [], languages: [], categoryTranslations: [] };
   }
 
   return {
     categories,
+    languages,
+    categoryTranslations,
   };
 };
 
@@ -27,8 +39,7 @@ export const actions = {
     const supabase = locals.supabase;
     const formData = await request.formData();
     const categoryName = formData.get('category_name');
-    // const categoryDescription = formData.get('category_description');
-
+    
     if (!categoryName) {
       return fail(400, { error: 'Category name is required' });
     }
