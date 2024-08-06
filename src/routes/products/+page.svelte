@@ -74,40 +74,60 @@
 			.range(0, limit - 1);
 
 		let translatedProducts = []; // Initialize outside the if block
+		let partCodeMatches = []; // Store products matching by part code
 
 		if (selectedCategoryId) {
 			query = query.eq('category_id', selectedCategoryId);
 		}
 
-		// Handle searching and language-specific product names
 		if (languageId !== undefined) {
-			const { data: translatedData, error } = await supabase
+			// Fetch products by translated name
+			const { data: translatedData, error: translationError } = await supabase
 				.from('product_translations')
 				.select('product_id, part_name')
 				.eq('language_id', languageId)
 				.ilike('part_name', `%${searchTerm}%`);
 
-			if (error) {
-				console.error('Error fetching translated products:', error);
+			if (translationError) {
+				console.error('Error fetching translated products:', translationError);
 				loading = false;
 				return;
 			}
 
 			translatedProducts = translatedData;
-			const translatedProductIds = translatedProducts.map((t) => t.product_id);
 
-			// Filter products by the translated product IDs
-			if (translatedProductIds.length > 0) {
-				query = query.in('id', translatedProductIds);
+			// Fetch products by part code
+			if (searchTerm.length >= 2) {
+				const { data: partCodeData, error: partCodeError } = await supabase
+					.from('products')
+					.select('id')
+					.ilike('part_code', `%${searchTerm}%`);
+
+				if (partCodeError) {
+					console.error('Error fetching products by part code:', partCodeError);
+					loading = false;
+					return;
+				}
+
+				partCodeMatches = partCodeData;
+			}
+
+			// Merge results
+			const mergedProductIds = new Set([
+				...translatedProducts.map((t) => t.product_id),
+				...partCodeMatches.map((p) => p.id)
+			]);
+
+			if (mergedProductIds.size > 0) {
+				query = query.in('id', Array.from(mergedProductIds));
 			} else if (searchTerm.length >= 2) {
-				// If there are no translated products and search term is long enough, show no results
 				products = [];
 				loading = false;
 				allLoaded = true;
 				return;
 			}
 		} else if (searchTerm.length >= 2) {
-			// Search in original English part names
+			// Search in original English part names and part codes
 			query = query.or(`part_name.ilike.%${searchTerm}%,part_code.ilike.%${searchTerm}%`);
 		}
 
