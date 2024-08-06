@@ -275,6 +275,8 @@
 	</div>
 </dialog>
 
+<a class="btn" href="/admin/products/translations">{m.translations()}</a>
+
 <!-- Search Form -->
 <form class="flex gap-2 mb-4" on:submit={handleSearch}>
 	<input

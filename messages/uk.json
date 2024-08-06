@@ -86,5 +86,6 @@
 	"add_category": "Додати категорію",
 	"login": "Увійти",
 	"email_placeholder": "Електронна пошта",
-	"password_placeholder": "Пароль"
+	"password_placeholder": "Пароль",
+	"translations": "Переклади"
 }

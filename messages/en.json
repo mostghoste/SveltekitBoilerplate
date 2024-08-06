@@ -86,5 +86,6 @@
 	"add_category": "Add Category",
 	"login": "Log in",
 	"email_placeholder": "Email",
-	"password_placeholder": "Password"
+	"password_placeholder": "Password",
+	"translations": "Translations"
 }

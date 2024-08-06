@@ -86,5 +86,6 @@
 	"add_category": "Pridėti kategoriją",
 	"login": "Prisijungti",
 	"email_placeholder": "El. paštas",
-	"password_placeholder": "Slaptažodis"
+	"password_placeholder": "Slaptažodis",
+	"translations": "Vertimai"
 }
