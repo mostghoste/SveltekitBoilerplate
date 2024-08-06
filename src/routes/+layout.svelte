@@ -2,7 +2,7 @@
 	import { ParaglideJS } from '@inlang/paraglide-sveltekit';
 	import { i18n } from '$lib/i18n';
 	import * as m from '$lib/paraglide/messages.js';
-	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte'; // Import the language switcher
+	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
 
 	import '../app.css';
 	import { invalidate, invalidateAll } from '$app/navigation';
@@ -64,17 +64,23 @@
 			<ul class="flex space-x-2">
 				<li class="btn btn-ghost"><a href={i18n.resolveRoute('/products')}>{m.products()}</a></li>
 				{#if role === 'admin'}
-					<li class="btn btn-ghost">
-						<a href={i18n.resolveRoute('/admin/users')}>{m.manage_users()}</a>
+					<li>
+						<a class="btn btn-ghost" href={i18n.resolveRoute('/admin/users')}>{m.manage_users()}</a>
 					</li>
-					<li class="btn btn-ghost">
-						<a href={i18n.resolveRoute('/admin/products')}>{m.manage_products()}</a>
+					<li>
+						<a class="btn btn-ghost" href={i18n.resolveRoute('/admin/products')}
+							>{m.manage_products()}</a
+						>
 					</li>
-					<li class="btn btn-ghost">
-						<a href={i18n.resolveRoute('/admin/customer_groups')}>{m.manage_customer_groups()}</a>
+					<li>
+						<a class="btn btn-ghost" href={i18n.resolveRoute('/admin/customer_groups')}
+							>{m.manage_customer_groups()}</a
+						>
 					</li>
-					<li class="btn btn-ghost">
-						<a href={i18n.resolveRoute('/admin/categories')}>{m.manage_categories()}</a>
+					<li>
+						<a class="btn btn-ghost" href={i18n.resolveRoute('/admin/categories')}
+							>{m.manage_categories()}</a
+						>
 					</li>
 				{/if}
 			</ul>
