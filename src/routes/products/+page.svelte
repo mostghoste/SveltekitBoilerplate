@@ -3,7 +3,6 @@
 	import ProductRow from './ProductRow.svelte';
 	import { debounce } from 'lodash-es';
 	import * as m from '$lib/paraglide/messages.js';
-	import { languageTag } from '$lib/paraglide/runtime.js';
 
 	/** @type {import('./$types').PageData} */
 	export let data;
@@ -20,76 +19,12 @@
 	let searchTerm = '';
 	let currentLanguageId = undefined;
 
-	async function fetchProducts() {
-		if (loading || allLoaded) return;
-
-		loading = true;
-		const from = (page - 1) * limit;
-		const to = from + limit - 1;
-
-		let query = supabase
-			.from('products')
-			.select(
-				`
-            id, image, part_code, part_name, category_id, 
-            categories(category_name), 
-            prices(price)
-        `,
-				{ count: 'exact' }
-			)
-			.eq('prices.customer_group_id', customerGroupId)
-			.range(from, to);
-
-		if (selectedCategoryId) {
-			query = query.eq('category_id', selectedCategoryId);
-		}
-
-		if (languageId !== undefined) {
-			// Join with product_translations to get translated names for non-English languages
-			query = query
-				.select(
-					`
-            id, image, part_code, part_name, category_id, 
-            categories(category_name), 
-            prices(price),
-            product_translations!inner(part_name)
-        `
-				)
-				.eq('product_translations.language_id', languageId);
-		}
-
-		const { data: productData, error, count } = await query;
-
-		if (error) {
-			console.error('Error fetching products:', error);
-			loading = false;
-			return;
-		}
-
-		products = productData.map((product) => ({
-			...product,
-			part_name:
-				languageId !== undefined
-					? product.product_translations[0]?.part_name || product.part_name
-					: product.part_name
-		}));
-
-		totalCount = count;
-		displayCount = products.length;
-		page++;
-		loading = false;
-
-		if (products.length >= totalCount) {
-			allLoaded = true;
-		}
-	}
-
 	$: if (languageId !== currentLanguageId) {
 		currentLanguageId = languageId;
 		products = [];
 		page = 1;
 		allLoaded = false;
-		fetchProducts();
+		searchProducts();
 	}
 
 	function selectCategory(categoryId) {
@@ -97,7 +32,7 @@
 		products = [];
 		page = 1;
 		allLoaded = false;
-		fetchProducts();
+		searchProducts();
 	}
 
 	let observer;
@@ -111,7 +46,7 @@
 
 		observer = new IntersectionObserver((entries) => {
 			if (entries[0].isIntersecting) {
-				fetchProducts();
+				searchProducts();
 			}
 		}, options);
 
@@ -123,6 +58,7 @@
 		products = [];
 		page = 1;
 		allLoaded = false;
+		loading = true;
 
 		let query = supabase
 			.from('products')
@@ -179,6 +115,7 @@
 
 		if (error) {
 			console.error('Error searching products:', error);
+			loading = false;
 			return;
 		}
 
@@ -193,6 +130,7 @@
 
 		totalCount = count;
 		displayCount = products.length;
+		loading = false;
 
 		if (products.length >= totalCount) {
 			allLoaded = true;
@@ -204,7 +142,6 @@
 	}
 
 	onMount(() => {
-		fetchProducts();
 		setupIntersectionObserver();
 	});
 </script>
