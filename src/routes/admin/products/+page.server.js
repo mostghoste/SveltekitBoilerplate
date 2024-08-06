@@ -1,25 +1,62 @@
 import { fail } from '@sveltejs/kit';
+import { languageTag } from '$lib/paraglide/runtime.js';
 import { v4 as uuidv4 } from 'uuid';
 
 /** @type {import('./$types').PageServerLoad} */
-export const load = async ({ locals }) => {
+export const load = async ({ locals, depends }) => {
+  depends("paraglide:lang");
   const supabase = locals.supabase;
+  const userLanguageCode = languageTag(); // Get the user's selected language code
 
   // Fetch categories
   const { data: categories, error: categoriesError } = await supabase
     .from('categories')
-    .select('*')
-    .order('id', { ascending: true }); // Sort categories by id
+    .select('id, category_name');
 
-  if (categoriesError) {
-    console.error('Error fetching categories:', categoriesError);
-    return { categories: [] };
+  // Fetch the language ID based on the user's language code
+  const { data: language, error: languageError } = await supabase
+    .from('languages')
+    .select('id')
+    .eq('code', userLanguageCode)
+    .single();
+
+  if (languageError || !language) {
+    console.error('Error fetching language:', languageError);
+    return {
+      categories: categories || [],
+      error: 'Failed to fetch language data',
+    };
   }
 
+  const languageId = language.id;
+
+  // Fetch category translations for the specified language ID
+  const { data: categoryTranslations, error: translationsError } = await supabase
+    .from('category_translations')
+    .select('category_id, category_name')
+    .eq('language_id', languageId);
+
+  if (categoriesError || translationsError) {
+    console.error('Error fetching data:', categoriesError, translationsError);
+    return { categories: [], error: 'Failed to fetch categories or translations' };
+  }
+
+  // Map translations to categories
+  const translatedCategories = categories.map((category) => {
+    const translation = categoryTranslations.find(
+      (t) => t.category_id === category.id
+    );
+    return {
+      ...category,
+      category_name: translation ? translation.category_name : category.category_name,
+    };
+  });
+
   return {
-    categories,
+    categories: translatedCategories,
   };
 };
+
 
 /** @type {import('./$types').Actions} */
 export const actions = {
