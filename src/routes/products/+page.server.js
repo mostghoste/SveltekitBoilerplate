@@ -43,6 +43,7 @@ export async function load({ locals, depends }) {
   }
 
   let categories = [];
+  let language_id;
 
   if (userLanguageCode === 'en') {
     // Fetch categories directly if the language is English
@@ -74,6 +75,7 @@ export async function load({ locals, depends }) {
     }
 
     const languageId = language.id;
+    language_id = languageId;
 
     // Fetch categories with translations for the specified language ID
     const { data: categoryData, error: categoriesError } = await supabase
@@ -90,13 +92,14 @@ export async function load({ locals, depends }) {
 
     categories = categoryData.map(category => ({
       id: category.id,
-      category_name: category.category_translations[0]?.category_name || category.category_name
+      category_name: category.category_translations[0]?.category_name || category.category_name,
     })) || [];
   }
 
   return {
     customerGroupId: userProfile.customer_group_id,
     categories,
-    totalProductCount: totalProductCount || 0
+    totalProductCount: totalProductCount || 0,
+    languageId: language_id
   };
 }

@@ -7,7 +7,7 @@
 
 	/** @type {import('./$types').PageData} */
 	export let data;
-	$: ({ supabase, categories, customerGroupId, totalProductCount } = data);
+	$: ({ supabase, categories, customerGroupId, totalProductCount, languageId } = data);
 
 	let products = [];
 	let page = 1;
