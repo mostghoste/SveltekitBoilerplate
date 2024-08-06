@@ -128,27 +128,51 @@
 			.from('products')
 			.select(
 				`
-				id, image, part_code, part_name, category_id, 
-				categories(category_name), 
-				prices(price), 
-				product_translations(part_name)
-			`,
+			id, image, part_code, part_name, category_id, 
+			categories(category_name), 
+			prices(price)
+		`,
 				{ count: 'exact' }
 			)
 			.eq('prices.customer_group_id', customerGroupId)
 			.range(0, limit - 1);
 
-		if (searchTerm.length >= 2) {
-			query = query.or(`part_name.ilike.%${searchTerm}%,part_code.ilike.%${searchTerm}%`);
-		}
+		let translatedProducts = []; // Initialize outside the if block
 
 		if (selectedCategoryId) {
 			query = query.eq('category_id', selectedCategoryId);
 		}
 
-		if (languageId) {
-			// Join with product_translations to get translated names
-			query = query.eq('product_translations.language_id', languageId);
+		// Handle searching and language-specific product names
+		if (languageId !== undefined) {
+			const { data: translatedData, error } = await supabase
+				.from('product_translations')
+				.select('product_id, part_name')
+				.eq('language_id', languageId)
+				.ilike('part_name', `%${searchTerm}%`);
+
+			if (error) {
+				console.error('Error fetching translated products:', error);
+				loading = false;
+				return;
+			}
+
+			translatedProducts = translatedData;
+			const translatedProductIds = translatedProducts.map((t) => t.product_id);
+
+			// Filter products by the translated product IDs
+			if (translatedProductIds.length > 0) {
+				query = query.in('id', translatedProductIds);
+			} else if (searchTerm.length >= 2) {
+				// If there are no translated products and search term is long enough, show no results
+				products = [];
+				loading = false;
+				allLoaded = true;
+				return;
+			}
+		} else if (searchTerm.length >= 2) {
+			// Search in original English part names
+			query = query.or(`part_name.ilike.%${searchTerm}%,part_code.ilike.%${searchTerm}%`);
 		}
 
 		const { data: productData, error, count } = await query;
@@ -160,8 +184,13 @@
 
 		products = productData.map((product) => ({
 			...product,
-			part_name: product.product_translations?.[0]?.part_name || product.part_name
+			part_name:
+				languageId !== undefined
+					? translatedProducts.find((t) => t.product_id === product.id)?.part_name ||
+						product.part_name
+					: product.part_name
 		}));
+
 		totalCount = count;
 		displayCount = products.length;
 
