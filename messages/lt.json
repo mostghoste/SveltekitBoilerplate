@@ -87,5 +87,6 @@
 	"login": "Prisijungti",
 	"email_placeholder": "El. paštas",
 	"password_placeholder": "Slaptažodis",
-	"translations": "Vertimai"
+	"translations": "Vertimai",
+	"admin_panel": "Administravimas"
 }

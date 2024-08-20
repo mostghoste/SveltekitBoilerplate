@@ -87,5 +87,6 @@
 	"login": "Увійти",
 	"email_placeholder": "Електронна пошта",
 	"password_placeholder": "Пароль",
-	"translations": "Переклади"
+	"translations": "Переклади",
+	"admin_panel": "Панель адміністратора"
 }

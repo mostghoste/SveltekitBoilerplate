@@ -60,34 +60,33 @@
 				</a>
 			</div>
 
-			<LanguageSwitcher />
 			<ul class="flex space-x-2">
-				<li class="btn btn-ghost"><a href={i18n.resolveRoute('/products')}>{m.products()}</a></li>
+				<li><a class="btn btn-ghost" href={i18n.resolveRoute('/products')}>{m.products()}</a></li>
 				{#if role === 'admin'}
-					<li>
-						<a class="btn btn-ghost" href={i18n.resolveRoute('/admin/users')}>{m.manage_users()}</a>
-					</li>
-					<li>
-						<a class="btn btn-ghost" href={i18n.resolveRoute('/admin/products')}
-							>{m.manage_products()}</a
-						>
-					</li>
-					<li>
-						<a class="btn btn-ghost" href={i18n.resolveRoute('/admin/customer_groups')}
-							>{m.manage_customer_groups()}</a
-						>
-					</li>
-					<li>
-						<a class="btn btn-ghost" href={i18n.resolveRoute('/admin/categories')}
-							>{m.manage_categories()}</a
-						>
+					<li class="dropdown dropdown-hover">
+						<label tabindex="0" class="btn btn-ghost m-1">{m.admin_panel()}</label>
+						<ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+							<li>
+								<a href={i18n.resolveRoute('/admin/users')}>{m.manage_users()}</a>
+							</li>
+							<li>
+								<a href={i18n.resolveRoute('/admin/products')}>{m.manage_products()}</a>
+							</li>
+							<li>
+								<a href={i18n.resolveRoute('/admin/customer_groups')}>{m.manage_customer_groups()}</a>
+							</li>
+							<li>
+								<a href={i18n.resolveRoute('/admin/categories')}>{m.manage_categories()}</a>
+							</li>
+						</ul>
 					</li>
 				{/if}
 			</ul>
 
+			<LanguageSwitcher />
 			<div class="flex-none">
 				<div class="dropdown dropdown-end">
-					<button class="btn btn-ghost btn-circle relative">
+					<button class="btn btn-ghost relative">
 						<div class="indicator">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
