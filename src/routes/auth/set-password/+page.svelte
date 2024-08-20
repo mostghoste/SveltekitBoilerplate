@@ -1,6 +1,8 @@
 <script>
 	import { goto } from '$app/navigation';
 	export let data;
+	import * as m from '$lib/paraglide/messages.js';
+
 	$: ({ token_hash, type, supabase } = data);
 
 	let password = '';
@@ -9,7 +11,7 @@
 
 	async function setPassword() {
 		if (password !== confirmPassword) {
-			errorMessage = 'Passwords do not match';
+			errorMessage = 'Passwords do not match.';
 			return;
 		}
 
@@ -31,15 +33,14 @@
 			errorMessage = updateError.message;
 		} else {
 			alert('Password set successfully! You are now logged in!');
-			goto('/');
+			goto('/products');
 		}
 	}
 </script>
 
-<h2 class="font-bold">Set Your Password</h2>
-
-<form on:submit|preventDefault={setPassword}>
-	<div>
+<main class="w-full h-screen flex justify-center items-center">
+	<form on:submit|preventDefault={setPassword} class="flex flex-col gap-2 border p-4 px-8 w-96">
+		<h2 class="font-bold">Set Your Password</h2>
 		<label for="password">Password</label>
 		<input
 			class="input input-bordered"
@@ -48,8 +49,6 @@
 			bind:value={password}
 			required
 		/>
-	</div>
-	<div>
 		<label for="confirm-password">Confirm Password</label>
 		<input
 			class="input input-bordered"
@@ -58,9 +57,9 @@
 			bind:value={confirmPassword}
 			required
 		/>
-	</div>
-	{#if errorMessage}
-		<p style="color: red;">{errorMessage}</p>
-	{/if}
-	<button class="btn" type="submit">Set Password</button>
-</form>
+		{#if errorMessage}
+			<p style="color: red;">{errorMessage}</p>
+		{/if}
+		<button class="btn btn-success" type="submit">Set Password</button>
+	</form>
+</main>
