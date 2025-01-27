@@ -1,4 +1,5 @@
 <script>
+	import AsideCart from './AsideCart.svelte';
 	import { onMount } from 'svelte';
 	import ProductRow from './ProductRow.svelte';
 	import { debounce } from 'lodash-es';
@@ -178,4 +179,8 @@
 			<div id="infinite-scroll-trigger" class="h-1"></div>
 		{/if}
 	</main>
+
+	<aside class="mt-10 w-1/4">
+		<AsideCart />
+	</aside>
 </div>
