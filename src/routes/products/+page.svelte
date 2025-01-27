@@ -180,7 +180,7 @@
 		{/if}
 	</main>
 
-	<aside class="mt-10 w-1/4">
+	<aside class="mt-10">
 		<AsideCart />
 	</aside>
 </div>
