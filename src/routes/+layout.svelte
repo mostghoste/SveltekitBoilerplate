@@ -73,7 +73,9 @@
 								<a href={i18n.resolveRoute('/admin/products')}>{m.manage_products()}</a>
 							</li>
 							<li>
-								<a href={i18n.resolveRoute('/admin/customer_groups')}>{m.manage_customer_groups()}</a>
+								<a href={i18n.resolveRoute('/admin/customer_groups')}
+									>{m.manage_customer_groups()}</a
+								>
 							</li>
 							<li>
 								<a href={i18n.resolveRoute('/admin/categories')}>{m.manage_categories()}</a>
