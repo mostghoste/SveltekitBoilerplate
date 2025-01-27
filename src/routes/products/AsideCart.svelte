@@ -5,6 +5,8 @@
 	export let user;
 
 	let CartProducts = [];
+	let showModal = false;
+
 	$: cart.subscribe((value) => {
 		CartProducts = value;
 	});
@@ -22,6 +24,7 @@
 			await sendOrderConfirmation(email, CartProducts);
 			alert(m.order_confirmed());
 			clearCart();
+			showModal = false;
 		} catch (error) {
 			alert(m.order_failed());
 			console.error(error);
@@ -117,7 +120,7 @@
 			<button
 				class="btn btn-success btn-sm w-full"
 				disabled={CartProducts.length <= 0}
-				on:click={confirmOrder}
+				on:click={() => (showModal = true)}
 			>
 				{m.checkout()}
 			</button>
@@ -128,3 +131,74 @@
 		</p>
 	{/if}
 </aside>
+
+<!-- Modal -->
+{#if showModal}
+	<div
+		class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+		on:click={() => (showModal = false)}
+	>
+		<div class="bg-white p-6 rounded-lg shadow-lg w-3/4 max-w-xl relative" on:click|stopPropagation>
+			<button
+				class="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
+				on:click={() => (showModal = false)}
+			>
+				X
+			</button>
+			{#if CartProducts.length > 0}
+				<h3 class="text-lg font-bold mb-4">{m.review_your_cart()}</h3>
+				<ul>
+					{#each CartProducts as product, index}
+						<li class="relative flex items-center border-b pb-2 mb-2 mt-4 gap-1">
+							<button
+								class="btn btn-xs btn-error absolute right-0 -top-2"
+								on:click={() => removeFromCart(product.id)}
+							>
+								X
+							</button>
+							<div class="flex items-center justify-between gap-4 w-full">
+								<figure class="w-16 h-16 flex-shrink-0 flex justify-center items-center">
+									<img
+										src={`https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/${product.image}`}
+										alt="{product.part_name} - {product.part_code}"
+										class="max-w-full max-h-full object-contain"
+									/>
+								</figure>
+								<div class="flex-1">
+									<p class="text-sm font-bold truncate">{product.part_name}</p>
+									<p class="text-sm truncate text-gray-500">{product.part_code}</p>
+								</div>
+								<div class="flex items-center gap-2">
+									<input
+										type="number"
+										class="input input-bordered w-16 text-center input-xs"
+										bind:value={product.quantity}
+										min="1"
+										on:change={() =>
+											cart.update((items) => {
+												items[index].quantity = Math.max(1, product.quantity);
+												return [...items];
+											})}
+									/>
+									<p>{product.prices[0]?.price.toFixed(2)}€</p>
+								</div>
+							</div>
+						</li>
+					{/each}
+				</ul>
+				<p class="text-lg font-bold mt-4">{m.cart_total()} {total.toFixed(2)}€</p>
+				<div class="flex justify-between mt-4">
+					<button class="btn btn-secondary" on:click={() => (showModal = false)}
+						>Grįžti į katalogą</button
+					>
+					<button class="btn btn-success" on:click={confirmOrder}>Tvirtinti</button>
+				</div>
+			{:else}
+				<p class="text-center text-gray-500">{m.cart_empty()}</p>
+				<button class="btn btn-secondary mt-4 mx-auto" on:click={() => (showModal = false)}>
+					Grįžti į katalogą
+				</button>
+			{/if}
+		</div>
+	</div>
+{/if}

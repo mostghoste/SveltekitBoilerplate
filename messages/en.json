@@ -89,5 +89,6 @@
 	"password_placeholder": "Password",
 	"translations": "Translations",
 	"admin_panel": "Admin panel",
-	"my_cart": "My cart"
+	"my_cart": "My cart",
+	"review_your_cart": "Review your cart"
 }

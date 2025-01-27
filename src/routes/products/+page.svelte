@@ -7,7 +7,7 @@
 
 	/** @type {import('./$types').PageData} */
 	export let data;
-	$: ({ supabase, categories, customerGroupId, totalProductCount, languageId } = data);
+	$: ({ supabase, categories, customerGroupId, totalProductCount, languageId, user } = data);
 
 	let products = [];
 	let page = 1;
@@ -181,6 +181,6 @@
 	</main>
 
 	<aside class="mt-10">
-		<AsideCart />
+		<AsideCart {user} />
 	</aside>
 </div>

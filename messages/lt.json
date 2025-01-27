@@ -89,5 +89,6 @@
 	"password_placeholder": "Slaptažodis",
 	"translations": "Vertimai",
 	"admin_panel": "Administravimas",
-	"my_cart": "Mano krepšelis"
+	"my_cart": "Mano krepšelis",
+	"review_your_cart": "Peržiūrėti užsakymą"
 }

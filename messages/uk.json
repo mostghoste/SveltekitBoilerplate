@@ -89,5 +89,6 @@
 	"password_placeholder": "Пароль",
 	"translations": "Переклади",
 	"admin_panel": "Панель адміністратора",
-	"my_cart": "Мій кошик"
+	"my_cart": "Мій кошик",
+	"review_your_cart": "Переглянути кошик"
 }
