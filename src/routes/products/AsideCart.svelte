@@ -36,28 +36,42 @@
 </script>
 
 <aside
-	class="sticky top-[var(--navbar-height)] h-[calc(100vh-var(--navbar-height))] flex flex-col gap-4 p-6 bg-white border-l border-gray-200 min-w-[300px] max-w-[400px] overflow-hidden shadow-lg"
+	class="sticky top-[var(--navbar-height)] h-[calc(100vh-var(--navbar-height))] flex flex-col gap-4 p-6 bg-white border-l border-gray-200 min-w-[400px] max-w-[400px] overflow-hidden shadow-lg"
 	style="--navbar-height: 120px;"
 >
-	<h2 class="text-lg font-bold text-gray-800">{m.mano_krepselis || 'Mano krepšelis'}</h2>
+	<h2 class="text-lg font-bold text-gray-800">🛒 {m.my_cart() || 'Mano krepšelis'}</h2>
 
 	{#if CartProducts?.length > 0}
 		<ul class="flex-1 w-full overflow-y-auto">
-			{#each CartProducts as product}
-				<li class="flex gap-4 items-center border-b pb-2 mb-2">
-					<div class="flex items-center gap-2 w-2/3">
+			{#each CartProducts as product, index}
+				<li class="relative flex items-center border-b pb-2 mb-2 mt-4 gap-1">
+					<!-- Remove Button -->
+					<button
+						class="btn btn-xs btn-error absolute right-0 -top-2"
+						on:click={() => removeFromCart(product.id)}
+					>
+						X
+					</button>
+
+					<!-- Left Section: Image, Name, Part Code -->
+					<div class="flex items-center gap-2 w-1/2">
 						<figure class="w-16 h-16 flex-shrink-0 flex justify-center items-center">
 							{#if product.image}
 								<img
-									src="https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/{product.image}"
+									src={`https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/${product.image}`}
 									alt="{product.part_name} - {product.part_code}"
 									class="max-w-full max-h-full object-contain"
 								/>
 							{:else}
-								<span class="text-sm text-gray-500">No Image</span>
+								<img
+									src="/src/lib/assets/images/missing.png"
+									alt="{product.part_name} - {product.part_code}"
+									title="{product.part_name} - {product.part_code}"
+									class="max-w-full max-h-full object-contain"
+								/>
 							{/if}
 						</figure>
-						<div class="flex flex-col overflow-hidden w-full">
+						<div class="flex flex-col overflow-hidden">
 							<p class="text-sm font-bold truncate" title={product.part_name}>
 								{product.part_name}
 							</p>
@@ -66,10 +80,24 @@
 							</p>
 						</div>
 					</div>
-					<div class="w-1/3 flex flex-col items-end">
-						{#if product.quantity > 1}
-							<span class="text-xs text-gray-500">x{product.quantity}</span>
-						{/if}
+
+					<!-- Right Section: Quantity, Price -->
+					<div class="flex items-center justify-between gap-4 w-1/2">
+						<div class="flex items-center gap-2">
+							<label for={`quantity-${index}`} class="text-xs text-gray-500">Kiekis:</label>
+							<input
+								id={`quantity-${index}`}
+								type="number"
+								min="1"
+								class="input input-bordered w-16 text-center input-xs"
+								bind:value={product.quantity}
+								on:change={() =>
+									cart.update((items) => {
+										items[index].quantity = Math.max(1, product.quantity);
+										return [...items];
+									})}
+							/>
+						</div>
 						<p class="text-gray-900 font-semibold">{product.prices[0]?.price.toFixed(2)}€</p>
 					</div>
 				</li>

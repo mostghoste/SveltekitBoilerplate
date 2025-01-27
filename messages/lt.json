@@ -24,7 +24,7 @@
 	"confirm_clear_cart": "Ar tikrai norite ištuštinti krepšelį?",
 	"cart_total": "Krepšelio suma:",
 	"clear_cart": "Ištuštinti krepšelį",
-	"checkout": "Užsakyti",
+	"checkout": "Formuoti užsakymą",
 	"cart_empty": "Jūsų krepšelis tuščias!",
     "user_management": "Vartotojų valdymas",
     "search_email": "Ieškoti el. pašto",
@@ -88,5 +88,6 @@
 	"email_placeholder": "El. paštas",
 	"password_placeholder": "Slaptažodis",
 	"translations": "Vertimai",
-	"admin_panel": "Administravimas"
+	"admin_panel": "Administravimas",
+	"my_cart": "Mano krepšelis"
 }

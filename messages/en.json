@@ -88,5 +88,6 @@
 	"email_placeholder": "Email",
 	"password_placeholder": "Password",
 	"translations": "Translations",
-	"admin_panel": "Admin panel"
+	"admin_panel": "Admin panel",
+	"my_cart": "My cart"
 }

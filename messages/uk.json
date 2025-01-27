@@ -88,5 +88,6 @@
 	"email_placeholder": "Електронна пошта",
 	"password_placeholder": "Пароль",
 	"translations": "Переклади",
-	"admin_panel": "Панель адміністратора"
+	"admin_panel": "Панель адміністратора",
+	"my_cart": "Мій кошик"
 }
