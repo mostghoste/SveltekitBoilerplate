@@ -45,7 +45,7 @@
 		};
 
 		observer = new IntersectionObserver((entries) => {
-			if (entries[0].isIntersecting) {
+			if (entries[0].isIntersecting && !loading && !allLoaded) {
 				searchProducts();
 			}
 		}, options);
@@ -55,9 +55,7 @@
 	}
 
 	const searchProducts = debounce(async () => {
-		products = [];
-		page = 1;
-		allLoaded = false;
+		if (loading || allLoaded) return;
 		loading = true;
 
 		let query = supabase
@@ -71,63 +69,13 @@
 				{ count: 'exact' }
 			)
 			.eq('prices.customer_group_id', customerGroupId)
-			.range(0, limit - 1);
-
-		let translatedProducts = []; // Initialize outside the if block
-		let partCodeMatches = []; // Store products matching by part code
+			.range((page - 1) * limit, page * limit - 1);
 
 		if (selectedCategoryId) {
 			query = query.eq('category_id', selectedCategoryId);
 		}
 
-		if (languageId !== undefined) {
-			// Fetch products by translated name
-			const { data: translatedData, error: translationError } = await supabase
-				.from('product_translations')
-				.select('product_id, part_name')
-				.eq('language_id', languageId)
-				.ilike('part_name', `%${searchTerm}%`);
-
-			if (translationError) {
-				console.error('Error fetching translated products:', translationError);
-				loading = false;
-				return;
-			}
-
-			translatedProducts = translatedData;
-
-			// Fetch products by part code
-			if (searchTerm.length >= 2) {
-				const { data: partCodeData, error: partCodeError } = await supabase
-					.from('products')
-					.select('id')
-					.ilike('part_code', `%${searchTerm}%`);
-
-				if (partCodeError) {
-					console.error('Error fetching products by part code:', partCodeError);
-					loading = false;
-					return;
-				}
-
-				partCodeMatches = partCodeData;
-			}
-
-			// Merge results
-			const mergedProductIds = new Set([
-				...translatedProducts.map((t) => t.product_id),
-				...partCodeMatches.map((p) => p.id)
-			]);
-
-			if (mergedProductIds.size > 0) {
-				query = query.in('id', Array.from(mergedProductIds));
-			} else if (searchTerm.length >= 2) {
-				products = [];
-				loading = false;
-				allLoaded = true;
-				return;
-			}
-		} else if (searchTerm.length >= 2) {
-			// Search in original English part names and part codes
+		if (searchTerm.length >= 2) {
 			query = query.or(`part_name.ilike.%${searchTerm}%,part_code.ilike.%${searchTerm}%`);
 		}
 
@@ -139,27 +87,17 @@
 			return;
 		}
 
-		products = productData.map((product) => ({
-			...product,
-			part_name:
-				languageId !== undefined
-					? translatedProducts.find((t) => t.product_id === product.id)?.part_name ||
-						product.part_name
-					: product.part_name
-		}));
+		if (productData.length > 0) {
+			products = [...products, ...productData];
+			page++;
+		} else {
+			allLoaded = true;
+		}
 
 		totalCount = count;
 		displayCount = products.length;
 		loading = false;
-
-		if (products.length >= totalCount) {
-			allLoaded = true;
-		}
 	}, 300);
-
-	$: if (searchTerm !== undefined) {
-		searchProducts();
-	}
 
 	onMount(() => {
 		setupIntersectionObserver();
@@ -176,7 +114,12 @@
 					placeholder={m.search_placeholder()}
 					class="input input-bordered w-full"
 					bind:value={searchTerm}
-					on:input={searchProducts}
+					on:input={() => {
+						products = [];
+						page = 1;
+						allLoaded = false;
+						searchProducts();
+					}}
 				/>
 			</li>
 			<li class="menu-title text-black">{m.categories()}</li>
