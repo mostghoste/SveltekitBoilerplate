@@ -145,9 +145,9 @@
 			>
 				X
 			</button>
+			<h3 class="text-lg font-bold mb-4">{m.review_your_cart()}</h3>
 			{#if CartProducts.length > 0}
-				<h3 class="text-lg font-bold mb-4">{m.review_your_cart()}</h3>
-				<ul>
+				<ul class="overflow-scroll max-h-96">
 					{#each CartProducts as product, index}
 						<li class="relative flex items-center border-b pb-2 mb-2 mt-4 gap-1">
 							<button
@@ -186,7 +186,26 @@
 						</li>
 					{/each}
 				</ul>
-				<p class="text-lg font-bold mt-4">{m.cart_total()} {total.toFixed(2)}€</p>
+				<p class="text-lg font-bold mt-4 text-right">{m.cart_total()} {total.toFixed(2)}€</p>
+				<div role="alert" class="alert alert-info mt-4">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+						class="h-6 w-6 shrink-0 stroke-current"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+						></path>
+					</svg>
+					<span
+						>Patvirtinus užsakymą, gausite užsakymo patvirtinimą el. paštu <b>{user.email}.</b> Apie
+						užsakymą bus informuotas Agrobond atstovas, kuris su jumis kuo greičiau susisieks.</span
+					>
+				</div>
 				<div class="flex justify-between mt-4">
 					<button class="btn btn-secondary" on:click={() => (showModal = false)}
 						>Grįžti į katalogą</button
