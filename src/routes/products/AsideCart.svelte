@@ -1,29 +1,36 @@
 <script>
 	import { cart } from '$lib/stores/cart';
 	import { sendOrderConfirmation } from '$lib/sendOrderConfirmation';
+	import { derived } from 'svelte/store';
 	import * as m from '$lib/paraglide/messages.js';
 	export let user;
 
 	let CartProducts = [];
 	let showModal = false;
 
+	// Reactive cart updates
 	$: cart.subscribe((value) => {
 		CartProducts = value;
 	});
 
+	// Total price calculation
 	$: total = CartProducts.reduce(
 		(sum, product) => sum + product.quantity * product.prices[0]?.price,
 		0
 	);
 
-	const { removeFromCart, clearCart } = cart;
+	// Derived store for cart validation
+	const isCartValid = derived(cart, ($cart) => {
+		return $cart.length > 0 && $cart.every((item) => item.quantity > 0);
+	});
 
+	// Confirm order function
 	async function confirmOrder() {
 		try {
 			const email = user.email;
 			await sendOrderConfirmation(email, CartProducts);
 			alert(m.order_confirmed());
-			clearCart();
+			cart.clearCart();
 			showModal = false;
 		} catch (error) {
 			alert(m.order_failed());
@@ -31,9 +38,10 @@
 		}
 	}
 
+	// Confirm clear cart
 	function confirmClearCart() {
 		if (window.confirm(m.confirm_clear_cart())) {
-			clearCart();
+			cart.clearCart();
 		}
 	}
 </script>
@@ -51,7 +59,7 @@
 					<!-- Remove Button -->
 					<button
 						class="btn btn-xs btn-error absolute right-0 -top-2"
-						on:click={() => removeFromCart(product.id)}
+						on:click={() => cart.removeFromCart(product.id)}
 					>
 						X
 					</button>
@@ -94,11 +102,8 @@
 								min="1"
 								class="input input-bordered w-16 text-center input-xs"
 								bind:value={product.quantity}
-								on:change={() =>
-									cart.update((items) => {
-										items[index].quantity = Math.max(1, product.quantity);
-										return [...items];
-									})}
+								on:change={(e) =>
+									cart.updateQuantity(product.id, Math.max(1, parseInt(e.target.value)))}
 							/>
 						</div>
 						<p class="text-gray-900 font-semibold">{product.prices[0]?.price.toFixed(2)}€</p>
@@ -119,7 +124,7 @@
 			</button>
 			<button
 				class="btn btn-success btn-sm w-full"
-				disabled={CartProducts.length <= 0}
+				disabled={!$isCartValid}
 				on:click={() => (showModal = true)}
 			>
 				{m.checkout()}
@@ -152,7 +157,7 @@
 						<li class="relative flex items-center border-b pb-2 mb-2 mt-4 gap-1">
 							<button
 								class="btn btn-xs btn-error absolute right-0 -top-2"
-								on:click={() => removeFromCart(product.id)}
+								on:click={() => cart.removeFromCart(product.id)}
 							>
 								X
 							</button>
@@ -174,11 +179,8 @@
 										class="input input-bordered w-16 text-center input-xs"
 										bind:value={product.quantity}
 										min="1"
-										on:change={() =>
-											cart.update((items) => {
-												items[index].quantity = Math.max(1, product.quantity);
-												return [...items];
-											})}
+										on:change={(e) =>
+											cart.updateQuantity(product.id, Math.max(1, parseInt(e.target.value)))}
 									/>
 									<p>{product.prices[0]?.price.toFixed(2)}€</p>
 								</div>
@@ -201,15 +203,16 @@
 							d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
 						></path>
 					</svg>
-					<span
-						>Patvirtinus užsakymą, gausite užsakymo patvirtinimą el. paštu <b>{user.email}.</b> Apie
-						užsakymą bus informuotas Agrobond atstovas, kuris su jumis kuo greičiau susisieks.</span
-					>
+					<span>
+						Patvirtinus užsakymą, gausite užsakymo patvirtinimą el. paštu
+						<b>{user.email}.</b> Apie užsakymą bus informuotas Agrobond atstovas, kuris su jumis kuo
+						greičiau susisieks.
+					</span>
 				</div>
 				<div class="flex justify-between mt-4">
-					<button class="btn btn-secondary" on:click={() => (showModal = false)}
-						>Grįžti į katalogą</button
-					>
+					<button class="btn btn-secondary" on:click={() => (showModal = false)}>
+						Grįžti į katalogą
+					</button>
 					<button class="btn btn-success" on:click={confirmOrder}>Tvirtinti</button>
 				</div>
 			{:else}
