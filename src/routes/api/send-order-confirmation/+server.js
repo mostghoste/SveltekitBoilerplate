@@ -1,12 +1,15 @@
 import { json } from '@sveltejs/kit';
 import { Resend } from 'resend';
+import { i18n } from '$lib/paraglide/messages.js';
 import { RESEND_API_KEY, EMAIL_SENDER_ADDRESS, EMAIL_SENDER_NAME, EMAIL_SALES_RECIPIENT } from '$env/static/private';
 
 const resend = new Resend(RESEND_API_KEY);
 
 export async function POST({ request, locals }) {
   try {
-    const { email, cart } = await request.json();
+    const { email, cart, language } = await request.json();
+
+    // console.log("Received language tag:" + language)
 
     if (!email || !Array.isArray(cart) || cart.length === 0) {
       return json({ message: 'Invalid request payload' }, { status: 400 });

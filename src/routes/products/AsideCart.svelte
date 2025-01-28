@@ -3,6 +3,7 @@
 	import { sendOrderConfirmation } from '$lib/sendOrderConfirmation';
 	import { derived } from 'svelte/store';
 	import * as m from '$lib/paraglide/messages.js';
+	import { languageTag } from '$lib/paraglide/runtime.js';
 	export let user;
 
 	let CartProducts = [];
@@ -30,7 +31,8 @@
 	async function confirmOrder() {
 		try {
 			const email = user.email;
-			await sendOrderConfirmation(email, CartProducts);
+			let selectedLanguage = languageTag();
+			await sendOrderConfirmation(email, CartProducts, selectedLanguage);
 			// If successful, show success state in the modal
 			orderStatus = 'success';
 		} catch (error) {

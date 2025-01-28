@@ -1,5 +1,4 @@
-export async function sendOrderConfirmation(email, cart) {
-  // Only send necessary data: email and product IDs with quantities
+export async function sendOrderConfirmation(email, cart, language) {
   const cartData = cart.map(item => ({
     id: item.id,
     quantity: item.quantity
@@ -10,7 +9,7 @@ export async function sendOrderConfirmation(email, cart) {
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ email, cart: cartData }),
+    body: JSON.stringify({ email, cart: cartData, language }),
   });
 
   if (!response.ok) {
