@@ -7,6 +7,8 @@
 
 	let CartProducts = [];
 	let showModal = false;
+	let orderStatus = null; // 'success' or 'fail'
+	let orderError = '';
 
 	// Reactive cart updates
 	$: cart.subscribe((value) => {
@@ -29,11 +31,12 @@
 		try {
 			const email = user.email;
 			await sendOrderConfirmation(email, CartProducts);
-			alert(m.order_confirmed());
-			cart.clearCart();
-			showModal = false;
+			// If successful, show success state in the modal
+			orderStatus = 'success';
 		} catch (error) {
-			alert(m.order_failed());
+			// If failed, stay in the modal and show error
+			orderStatus = 'fail';
+			orderError = error?.message || 'Įvyko klaida.';
 			console.error(error);
 		}
 	}
@@ -125,7 +128,11 @@
 			<button
 				class="btn btn-success btn-sm w-full"
 				disabled={!$isCartValid}
-				on:click={() => (showModal = true)}
+				on:click={() => {
+					showModal = true;
+					orderStatus = null; // reset status each time we open
+					orderError = '';
+				}}
 			>
 				{m.checkout()}
 			</button>
@@ -150,75 +157,124 @@
 			>
 				X
 			</button>
-			<h3 class="text-lg font-bold mb-4">{m.review_your_cart()}</h3>
-			{#if CartProducts.length > 0}
-				<ul class="overflow-scroll max-h-96">
-					{#each CartProducts as product, index}
-						<li class="relative flex items-center border-b pb-2 mb-2 mt-4 gap-1">
-							<button
-								class="btn btn-xs btn-error absolute right-0 -top-2"
-								on:click={() => cart.removeFromCart(product.id)}
-							>
-								X
-							</button>
-							<div class="flex items-center justify-between gap-4 w-full">
-								<figure class="w-16 h-16 flex-shrink-0 flex justify-center items-center">
-									<img
-										src={`https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/${product.image}`}
-										alt="{product.part_name} - {product.part_code}"
-										class="max-w-full max-h-full object-contain"
-									/>
-								</figure>
-								<div class="flex-1">
-									<p class="text-sm font-bold truncate">{product.part_name}</p>
-									<p class="text-sm truncate text-gray-500">{product.part_code}</p>
-								</div>
-								<div class="flex items-center gap-2">
-									<input
-										type="number"
-										class="input input-bordered w-16 text-center input-xs"
-										bind:value={product.quantity}
-										min="1"
-										on:change={(e) =>
-											cart.updateQuantity(product.id, Math.max(1, parseInt(e.target.value)))}
-									/>
-									<p>{product.prices[0]?.price.toFixed(2)}€</p>
-								</div>
-							</div>
-						</li>
-					{/each}
-				</ul>
-				<p class="text-lg font-bold mt-4 text-right">{m.cart_total()} {total.toFixed(2)}€</p>
-				<div role="alert" class="alert alert-info mt-4">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						fill="none"
-						viewBox="0 0 24 24"
-						class="h-6 w-6 shrink-0 stroke-current"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-						></path>
-					</svg>
-					<span>
-						{@html m.order_confirmation_information({ email: `<b>${user.email}</b>` })}
-					</span>
-				</div>
-			{:else}
-				<p class="text-center text-gray-500">{m.cart_empty()}</p>
-			{/if}
 
-			<div class="flex justify-between mt-4">
-				<button class="btn btn-secondary" on:click={() => (showModal = false)}>
-					Grįžti į katalogą
-				</button>
-				<button class="btn btn-success" disabled={!$isCartValid} on:click={confirmOrder}
-					>Tvirtinti</button
+			{#if orderStatus === 'success'}
+				<!-- Success state -->
+				<h2 class="text-xl font-bold mb-2">Jūsų užsakymas buvo patvirtintas!</h2>
+				<p class="mb-4">
+					patvirtinimą išsiuntėme el. paštu {user.email}. Agrobond atstovas jau netrukus su jumis
+					susisieks.
+				</p>
+				<button
+					class="btn btn-success"
+					on:click={() => {
+						cart.clearCart();
+						showModal = false;
+						orderStatus = null;
+					}}
 				>
-			</div>
+					Tęsti
+				</button>
+			{:else}
+				<!-- Normal or fail state -->
+				<h3 class="text-lg font-bold mb-4">{m.review_your_cart()}</h3>
+				{#if CartProducts.length > 0}
+					<ul class="overflow-scroll max-h-96">
+						{#each CartProducts as product, index}
+							<li class="relative flex items-center border-b pb-2 mb-2 mt-4 gap-1">
+								<button
+									class="btn btn-xs btn-error absolute right-0 -top-2"
+									on:click={() => cart.removeFromCart(product.id)}
+								>
+									X
+								</button>
+								<div class="flex items-center justify-between gap-4 w-full">
+									<figure class="w-16 h-16 flex-shrink-0 flex justify-center items-center">
+										<img
+											src={`https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/${product.image}`}
+											alt="{product.part_name} - {product.part_code}"
+											class="max-w-full max-h-full object-contain"
+										/>
+									</figure>
+									<div class="flex-1">
+										<p class="text-sm font-bold truncate">{product.part_name}</p>
+										<p class="text-sm truncate text-gray-500">{product.part_code}</p>
+									</div>
+									<div class="flex items-center gap-2">
+										<input
+											type="number"
+											class="input input-bordered w-16 text-center input-xs"
+											bind:value={product.quantity}
+											min="1"
+											on:change={(e) =>
+												cart.updateQuantity(product.id, Math.max(1, parseInt(e.target.value)))}
+										/>
+										<p>{product.prices[0]?.price.toFixed(2)}€</p>
+									</div>
+								</div>
+							</li>
+						{/each}
+					</ul>
+					<p class="text-lg font-bold mt-4 text-right">
+						{m.cart_total()}
+						{total.toFixed(2)}€
+					</p>
+
+					{#if orderStatus === 'fail'}
+						<!-- Error alert -->
+						<div role="alert" class="alert alert-error mt-4">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-6 w-6 shrink-0 stroke-current"
+								fill="none"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+								/>
+							</svg>
+							<span
+								>Įvyko klaida tvirtinant užsakymą: {orderError}. Palaukite ir pabandykite iš naujo,
+								jei problema tęsis, praneškite mums paštu <b>info@agrobond.lt</b>.</span
+							>
+						</div>
+					{:else}
+						<!-- Info alert -->
+						<div role="alert" class="alert alert-info mt-4">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								fill="none"
+								viewBox="0 0 24 24"
+								class="h-6 w-6 shrink-0 stroke-current"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+								></path>
+							</svg>
+							<span>
+								{@html m.order_confirmation_information({ email: `<b>${user.email}</b>` })}
+							</span>
+						</div>
+					{/if}
+				{:else}
+					<p class="text-center text-gray-500">{m.cart_empty()}</p>
+				{/if}
+
+				<div class="flex justify-between mt-4">
+					<button class="btn btn-secondary" on:click={() => (showModal = false)}>
+						Grįžti į katalogą
+					</button>
+					<button class="btn btn-success" disabled={!$isCartValid} on:click={confirmOrder}>
+						Tvirtinti
+					</button>
+				</div>
+			{/if}
 		</div>
 	</div>
 {/if}
