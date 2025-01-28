@@ -145,7 +145,7 @@
 	>
 		<div class="bg-white p-6 rounded-lg shadow-lg w-3/4 max-w-xl relative" on:click|stopPropagation>
 			<button
-				class="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
+				class="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
 				on:click={() => (showModal = false)}
 			>
 				X
@@ -204,23 +204,21 @@
 						></path>
 					</svg>
 					<span>
-						Patvirtinus užsakymą, gausite užsakymo patvirtinimą el. paštu
-						<b>{user.email}.</b> Apie užsakymą bus informuotas Agrobond atstovas, kuris su jumis kuo
-						greičiau susisieks.
+						{@html m.order_confirmation_information({ email: `<b>${user.email}</b>` })}
 					</span>
-				</div>
-				<div class="flex justify-between mt-4">
-					<button class="btn btn-secondary" on:click={() => (showModal = false)}>
-						Grįžti į katalogą
-					</button>
-					<button class="btn btn-success" on:click={confirmOrder}>Tvirtinti</button>
 				</div>
 			{:else}
 				<p class="text-center text-gray-500">{m.cart_empty()}</p>
-				<button class="btn btn-secondary mt-4 mx-auto" on:click={() => (showModal = false)}>
+			{/if}
+
+			<div class="flex justify-between mt-4">
+				<button class="btn btn-secondary" on:click={() => (showModal = false)}>
 					Grįžti į katalogą
 				</button>
-			{/if}
+				<button class="btn btn-success" disabled={!$isCartValid} on:click={confirmOrder}
+					>Tvirtinti</button
+				>
+			</div>
 		</div>
 	</div>
 {/if}

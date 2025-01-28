@@ -90,5 +90,6 @@
 	"translations": "Translations",
 	"admin_panel": "Admin panel",
 	"my_cart": "My cart",
-	"review_your_cart": "Review your cart"
+	"review_your_cart": "Review your cart",
+	"order_confirmation_information": "Once your order is confirmed, you will receive an order confirmation at {email}. An Agrobond representative will be notified and will contact you as soon as possible."
 }

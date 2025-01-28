@@ -90,5 +90,6 @@
 	"translations": "Vertimai",
 	"admin_panel": "Administravimas",
 	"my_cart": "Mano krepšelis",
-	"review_your_cart": "Peržiūrėti užsakymą"
+	"review_your_cart": "Peržiūrėti užsakymą",
+	"order_confirmation_information": "Patvirtinus užsakymą, gausite užsakymo patvirtinimą el. paštu {email}. Apie užsakymą bus informuotas Agrobond atstovas, kuris su jumis kuo greičiau susisieks."
 }
