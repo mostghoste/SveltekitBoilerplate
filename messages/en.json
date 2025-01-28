@@ -14,6 +14,7 @@
 	"part_details": "Part details",
 	"price": "Price",
 	"quantity": "Quantity",
+	"quantity_short": "Qty.",
 	"no_products_found": "No products found!",
 	"loading": "Loading...",
 	"displaying_products": "Displaying {displayCount} out of {totalProductCount} products",
@@ -24,7 +25,7 @@
 	"confirm_clear_cart": "Are you sure you want to clear the cart?",
 	"cart_total": "Cart total:",
 	"clear_cart": "Clear Cart",
-	"checkout": "Checkout",
+	"checkout": "Continue to checkout",
 	"cart_empty": "Your cart is empty!",
     "user_management": "User management",
     "search_email": "Search email",
@@ -91,5 +92,10 @@
 	"admin_panel": "Admin panel",
 	"my_cart": "My cart",
 	"review_your_cart": "Review your cart",
-	"order_confirmation_information": "Once your order is confirmed, you will receive an order confirmation at {email}. An Agrobond representative will be notified and will contact you as soon as possible."
+	"order_confirmation_information": "Once your order is confirmed, you will receive an order confirmation at {email}. An Agrobond representative will be notified and will contact you as soon as possible.",
+	"return_to_catalog": "Return to catalog",
+	"confirm_cart_error": "An error occurred while confirming the order: {orderError}. Please wait and try again. If the problem persists, contact us via email at <b>info@agrobond.lt</b>.",
+	"confirm_cart_successful_title": "Your order has been confirmed!",
+	"confirm_cart_successful_p": "We have sent a confirmation to your email {email}. An Agrobond representative will contact you shortly.",
+	"confirm_cart_continue": "Continue"
 }

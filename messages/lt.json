@@ -14,6 +14,7 @@
 	"part_details": "Detalės informacija",
 	"price": "Kaina",
 	"quantity": "Kiekis",
+	"quantity_short": "Vnt.",
 	"no_products_found": "Produktų nerasta!",
 	"loading": "Įkeliama...",
 	"displaying_products": "Rodoma {displayCount} iš {totalProductCount} produktų",
@@ -91,5 +92,10 @@
 	"admin_panel": "Administravimas",
 	"my_cart": "Mano krepšelis",
 	"review_your_cart": "Peržiūrėti užsakymą",
-	"order_confirmation_information": "Patvirtinus užsakymą, gausite užsakymo patvirtinimą el. paštu {email}. Apie užsakymą bus informuotas Agrobond atstovas, kuris su jumis kuo greičiau susisieks."
+	"order_confirmation_information": "Patvirtinus užsakymą, gausite užsakymo patvirtinimą el. paštu {email}. Apie užsakymą bus informuotas Agrobond atstovas, kuris su jumis kuo greičiau susisieks.",
+	"return_to_catalog": "Grįžti į katalogą",
+	"confirm_cart_error": "Įvyko klaida tvirtinant užsakymą: {orderError}. Palaukite ir pabandykite dar kartą. Jei problema tęsis, susisiekite su mumis el. paštu <b>info@agrobond.lt</b>.",
+	"confirm_cart_successful_title": "Jūsų užsakymas buvo patvirtintas!",
+	"confirm_cart_successful_p": "Patvirtinimą išsiuntėme el. paštu {email}. Agrobond atstovas jau netrukus su jumis susisieks.",
+	"confirm_cart_continue": "Tęsti"
 }

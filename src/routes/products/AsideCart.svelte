@@ -98,7 +98,9 @@
 					<!-- Right Section: Quantity, Price -->
 					<div class="flex items-center justify-between gap-4 w-1/2">
 						<div class="flex items-center gap-2">
-							<label for={`quantity-${index}`} class="text-xs text-gray-500">Kiekis:</label>
+							<label for={`quantity-${index}`} class="text-xs text-gray-500"
+								>{m.quantity_short()}</label
+							>
 							<input
 								id={`quantity-${index}`}
 								type="number"
@@ -157,24 +159,27 @@
 			>
 				X
 			</button>
-
-			{#if orderStatus === 'success'}
+			{#if true}
+				<!-- {#if orderStatus === 'success'} -->
 				<!-- Success state -->
-				<h2 class="text-xl font-bold mb-2">Jūsų užsakymas buvo patvirtintas!</h2>
-				<p class="mb-4">
-					patvirtinimą išsiuntėme el. paštu {user.email}. Agrobond atstovas jau netrukus su jumis
-					susisieks.
-				</p>
-				<button
-					class="btn btn-success"
-					on:click={() => {
-						cart.clearCart();
-						showModal = false;
-						orderStatus = null;
-					}}
-				>
-					Tęsti
-				</button>
+				<div class="flex flex-col justify-center py-16">
+					<h2 class="text-xl font-bold mb-4 text-center">{m.confirm_cart_successful_title()}</h2>
+					<p class="mb-4 text-center">
+						{m.confirm_cart_successful_p({ email: user.email })}
+					</p>
+					<div class="flex justify-center">
+						<button
+							class="btn btn-success"
+							on:click={() => {
+								cart.clearCart();
+								showModal = false;
+								orderStatus = null;
+							}}
+						>
+							{m.confirm_cart_continue()}
+						</button>
+					</div>
+				</div>
 			{:else}
 				<!-- Normal or fail state -->
 				<h3 class="text-lg font-bold mb-4">{m.review_your_cart()}</h3>
@@ -236,10 +241,7 @@
 									d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
 								/>
 							</svg>
-							<span
-								>Įvyko klaida tvirtinant užsakymą: {orderError}. Palaukite ir pabandykite iš naujo,
-								jei problema tęsis, praneškite mums paštu <b>info@agrobond.lt</b>.</span
-							>
+							<span>{@html m.confirm_cart_error({ orderError: orderError })}</span>
 						</div>
 					{:else}
 						<!-- Info alert -->
@@ -268,10 +270,10 @@
 
 				<div class="flex justify-between mt-4">
 					<button class="btn btn-secondary" on:click={() => (showModal = false)}>
-						Grįžti į katalogą
+						{m.return_to_catalog()}
 					</button>
 					<button class="btn btn-success" disabled={!$isCartValid} on:click={confirmOrder}>
-						Tvirtinti
+						{m.confirm()}
 					</button>
 				</div>
 			{/if}
