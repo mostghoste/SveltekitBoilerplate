@@ -159,8 +159,8 @@
 			>
 				X
 			</button>
-			{#if true}
-				<!-- {#if orderStatus === 'success'} -->
+			<!-- {#if true} -->
+			{#if orderStatus === 'success'}
 				<!-- Success state -->
 				<div class="flex flex-col justify-center py-16">
 					<h2 class="text-xl font-bold mb-4 text-center">{m.confirm_cart_successful_title()}</h2>
