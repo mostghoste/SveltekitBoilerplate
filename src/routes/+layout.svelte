@@ -80,6 +80,9 @@
 							<li>
 								<a href={i18n.resolveRoute('/admin/categories')}>{m.manage_categories()}</a>
 							</li>
+							<li>
+								<a href={i18n.resolveRoute('/admin/excel_upload')}>{m.excel_upload()}</a>
+							</li>
 						</ul>
 					</li>
 				{/if}

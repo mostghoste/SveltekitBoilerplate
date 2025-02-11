@@ -97,5 +97,6 @@
 	"confirm_cart_error": "Įvyko klaida tvirtinant užsakymą: {orderError}. Palaukite ir pabandykite dar kartą. Jei problema tęsis, susisiekite su mumis el. paštu <b>info@agrobond.lt</b>.",
 	"confirm_cart_successful_title": "Jūsų užsakymas buvo patvirtintas!",
 	"confirm_cart_successful_p": "Patvirtinimą išsiuntėme el. paštu {email}. Agrobond atstovas jau netrukus su jumis susisieks.",
-	"confirm_cart_continue": "Tęsti"
+	"confirm_cart_continue": "Tęsti",
+	"excel_upload": "Sinchronizuoti su excel"
 }

@@ -97,5 +97,6 @@
 	"confirm_cart_error": "An error occurred while confirming the order: {orderError}. Please wait and try again. If the problem persists, contact us via email at <b>info@agrobond.lt</b>.",
 	"confirm_cart_successful_title": "Your order has been confirmed!",
 	"confirm_cart_successful_p": "We have sent a confirmation to your email {email}. An Agrobond representative will contact you shortly.",
-	"confirm_cart_continue": "Continue"
+	"confirm_cart_continue": "Continue",
+	"excel_upload": "Sync with excel"
 }
