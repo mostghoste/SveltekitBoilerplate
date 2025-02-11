@@ -1,3 +1,6 @@
+// excel_upload/+page.server.js
+// All the code left here was part of another page and should be removed, but use it to grasp the codebase
+
 import { fail } from '@sveltejs/kit';
 
 /** @type {import('./$types').PageServerLoad} */
