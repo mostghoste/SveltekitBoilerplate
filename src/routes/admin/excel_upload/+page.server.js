@@ -13,50 +13,59 @@ export const actions = {
   // A) Upload & Parse (no DB writes)
   // ---------------------------------------------
   parseFile: async ({ request }) => {
-    console.log('[parseFile] Action triggered...');
-    const formData = await request.formData();
+		console.log('[parseFile] Action triggered...');
+		const formData = await request.formData();
 
-    // Dump formData entries for debugging
-    for (const [key, val] of formData.entries()) {
-      console.log(`[parseFile] formData: key="${key}", value="${val}"`);
-    }
+		// Dump formData entries for debugging
+		for (const [key, val] of formData.entries()) {
+			console.log(`[parseFile] formData: key="${key}", value="${val}"`);
+		}
 
-    const file = formData.get('file');
+		const file = formData.get('file');
 
-    // Check that a file was provided and it's not empty.
-    if (!file || (file instanceof File && file.size === 0)) {
-      console.log('[parseFile] No file provided or file is empty!');
-      return fail(400, { error: 'No file provided or file is empty' });
-    }
+		// Check that a file was provided and it's not empty.
+		if (!file || (file instanceof File && file.size === 0)) {
+			console.log('[parseFile] No file provided or file is empty!');
+			return fail(400, { error: 'No file provided or file is empty' });
+		}
 
-    // The logs array we also return to the client side
-    const logs = [];
-    try {
-      console.log('[parseFile] Reading file as text...');
-      const contents = await file.text();
-      console.log('[parseFile] File contents length:', contents.length);
+		// Separate log arrays for info and developer levels.
+		const infoLogs = [];
+		const devLogs = [];
 
-      console.log('[parseFile] Parsing CSV with semicolon delimiter');
-      const rows = parseCSV(contents);
+		try {
+			console.log('[parseFile] Reading file as text...');
+			infoLogs.push('[parseFile] Reading file as text...');
+			devLogs.push('[parseFile] Reading file as text...');
+			const contents = await file.text();
+			console.log('[parseFile] File contents length:', contents.length);
+			infoLogs.push(`[parseFile] File contents length: ${contents.length}`);
+			devLogs.push(`[parseFile] File contents length: ${contents.length}`);
 
-      logs.push(`Parsed ${rows.length} rows successfully.`);
-      if (rows.length > 0) {
-        logs.push(`First row: ${JSON.stringify(rows[0])}`);
-      }
+			console.log('[parseFile] Parsing CSV with semicolon delimiter');
+			infoLogs.push('[parseFile] Parsing CSV with semicolon delimiter');
+			devLogs.push('[parseFile] Parsing CSV with semicolon delimiter');
 
-      console.log(`[parseFile] Done. Rows: ${rows.length}`);
-      // Return success + the rows so the Svelte page can preview them
-      return {
-        success: true,
-        previewRows: rows,
-        logs
-      };
-    } catch (err) {
-      console.error('[parseFile] Error parsing CSV:', err);
-      logs.push(`Error parsing CSV: ${err.message}`);
-      return fail(400, { error: 'Failed to parse file', logs });
-    }
-  },
+			// Pass both log arrays so that parseCSV() can log each row.
+			const rows = parseCSV(contents, infoLogs, devLogs);
+
+			infoLogs.push(`Parsed ${rows.length} rows successfully.`);
+			devLogs.push(`Parsed ${rows.length} rows successfully.`);
+
+			console.log(`[parseFile] Done. Rows: ${rows.length}`);
+			// Return all parsed rows along with separate logs.
+			return {
+				success: true,
+				previewRows: rows, // all parsed rows (frontend can slice to 10)
+				logsInfo: infoLogs,
+				logsDev: devLogs
+			};
+		} catch (err) {
+			console.error('[parseFile] Error parsing CSV:', err);
+			infoLogs.push(`Error parsing CSV: ${err.message}`);
+			return fail(400, { error: 'Failed to parse file', logsInfo: infoLogs, logsDev: devLogs });
+		}
+	},
 
   // ---------------------------------------------
   // B) Confirm & Insert (writes to DB)
@@ -315,57 +324,85 @@ export const actions = {
 
 /**
  * Robust CSV parser using semicolons as the delimiter.
- * It validates the presence of required headers and logs warnings for unrecognized headers.
+ * Logs every line to devLogs and only logs validation issues (with reasons) to infoLogs.
+ * Also filters each row to include only required and allowed optional headers.
+ *
+ * @param {string} contents - The CSV file contents.
+ * @param {Array<string>} infoLogs - Array for info-level logs.
+ * @param {Array<string>} devLogs - Array for developer-level logs.
+ * @returns {Array<object>} The filtered data rows.
  */
-function parseCSV(contents) {
-  console.log('[parseCSV] Starting parse with semicolons');
-  
-  // Split contents by newline and filter out empty lines.
-  const lines = contents.split('\n').filter((r) => r.trim() !== '');
-  if (lines.length < 2) {
-    throw new Error('No data rows found in CSV (or file is empty).');
-  }
+function parseCSV(contents, infoLogs = [], devLogs = []) {
+	devLogs.push('[parseCSV] Starting parse with semicolons');
+	// Split file into nonempty lines.
+	const lines = contents.split('\n').filter((r) => r.trim() !== '');
+	if (lines.length < 2) {
+		const msg = 'No data rows found in CSV (or file is empty).';
+		infoLogs.push(`[parseCSV] ${msg}`);
+		throw new Error(msg);
+	}
 
-  // Parse the header row.
-  const headers = lines[0].split(';').map((h) => h.trim());
-  console.log('[parseCSV] Headers:', headers);
+	// Parse the header row.
+	const headers = lines[0].split(';').map((h) => h.trim());
+	devLogs.push(`[parseCSV] Headers: ${JSON.stringify(headers)}`);
 
-  // Define required headers.
-  const requiredHeaders = ['category', 'part_name', 'part_code', 'price (without VAT)'];
+	// Define required headers.
+	const requiredHeaders = ['category', 'part_name', 'part_code', 'price (without VAT)'];
+	const missingHeaders = requiredHeaders.filter((h) => !headers.includes(h));
+	if (missingHeaders.length > 0) {
+		const msg = `Missing required headers: ${missingHeaders.join(', ')}`;
+		infoLogs.push(`[parseCSV] ${msg}`);
+		throw new Error(msg);
+	}
 
-  // Check if all required headers are present.
-  const missingHeaders = requiredHeaders.filter((h) => !headers.includes(h));
-  if (missingHeaders.length > 0) {
-    throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
-  }
+	// Helper: allowed optional headers.
+	const isAllowedOptional = (header) => {
+		if (/^part_name_[a-zA-Z]{2}$/.test(header)) return true;
+		if (/^price_.+/.test(header)) return true;
+		if (header === 'image') return true;
+		return false;
+	};
 
-  // Define a helper to test allowed optional header patterns.
-  const isAllowedOptional = (header) => {
-    // Matches part_name_* where * is exactly two letters (e.g., part_name_en)
-    if (/^part_name_[a-zA-Z]{2}$/.test(header)) return true;
-    // Matches price_* where * is any non-empty string (e.g., price_premium)
-    if (/^price_.+/.test(header)) return true;
-    // Explicitly allow 'image'
-    if (header === 'image') return true;
-    return false;
-  };
+	// Log warnings for any headers that aren’t allowed.
+	headers.forEach((header) => {
+		if (!requiredHeaders.includes(header) && !isAllowedOptional(header)) {
+			const warnMsg = `[parseCSV] Warning: Unexpected header found: '${header}'`;
+			infoLogs.push(warnMsg);
+			devLogs.push(warnMsg);
+		}
+	});
 
-  // Log a warning for each header that is neither required nor allowed as optional.
-  headers.forEach(header => {
-    if (!requiredHeaders.includes(header) && !isAllowedOptional(header)) {
-      console.warn(`[parseCSV] Warning: Unexpected header found: '${header}'`);
-    }
-  });
+	const dataRows = [];
+	// Process each data line.
+	lines.slice(1).forEach((line, idx) => {
+		const rowNumber = idx + 2; // +2 because headers are line 1
+		const values = line.split(';').map((v) => v.trim());
+		const row = {};
+		headers.forEach((header, i) => {
+			row[header] = values[i] ?? '';
+		});
 
-  // Parse each subsequent data row.
-  const dataRows = lines.slice(1).map((line, idx) => {
-    const values = line.split(';').map((v) => v.trim());
-    const obj = {};
-    headers.forEach((header, i) => {
-      obj[header] = values[i] ?? '';
-    });
-    return obj;
-  });
+		// Validate row: check that each required header has a value.
+		const rowErrors = [];
+		requiredHeaders.forEach((r) => {
+			if (!row[r] || row[r].trim() === '') {
+				rowErrors.push(`Missing value for '${r}'`);
+			}
+		});
+		if (rowErrors.length > 0) {
+			infoLogs.push(`[parseCSV] Row ${rowNumber} failed validation: ${rowErrors.join('; ')}`);
+		}
+		devLogs.push(`[parseCSV] Parsed row ${rowNumber}: ${JSON.stringify(row)}`);
 
-  return dataRows;
+		// Filter row: keep only keys that are required or allowed optional.
+		const filteredRow = {};
+		Object.keys(row).forEach((key) => {
+			if (requiredHeaders.includes(key) || isAllowedOptional(key)) {
+				filteredRow[key] = row[key];
+			}
+		});
+		dataRows.push(filteredRow);
+	});
+
+	return dataRows;
 }
