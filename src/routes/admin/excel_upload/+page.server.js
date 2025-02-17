@@ -15,6 +15,9 @@ export const actions = {
   parseFile: async ({ request }) => {
 		console.log('[parseFile] Action triggered...');
 		const formData = await request.formData();
+    // Separate log arrays for info and developer levels.
+		const infoLogs = [];
+		const devLogs = [];
 
 		// Dump formData entries for debugging
 		for (const [key, val] of formData.entries()) {
@@ -25,13 +28,13 @@ export const actions = {
 
 		// Check that a file was provided and it's not empty.
 		if (!file || (file instanceof File && file.size === 0)) {
+      infoLogs.push(`[Error] No file was provided!`);
+      devLogs.push(`[Error] No file was provided!`);
 			console.log('[parseFile] No file provided or file is empty!');
-			return fail(400, { error: 'No file provided or file is empty' });
+			return fail(400, { error: 'No file provided or file is empty', logsInfo: infoLogs, logsDev: devLogs });
 		}
 
-		// Separate log arrays for info and developer levels.
-		const infoLogs = [];
-		const devLogs = [];
+
 
 		try {
 			console.log('[parseFile] Reading file as text...');

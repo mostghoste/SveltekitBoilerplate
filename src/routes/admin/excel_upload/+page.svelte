@@ -35,25 +35,36 @@
 <!-- Logs Toggle Buttons -->
 <div class="my-2">
 	<button
-		class="btn btn-secondary"
+		class="btn"
+		class:btn-primary={logMode === 'info'}
+		class:btn-outline-secondary={logMode !== 'info'}
 		on:click={() => (logMode = 'info')}
-		class:active={logMode === 'info'}
 	>
 		Info
 	</button>
 	<button
-		class="btn btn-secondary"
+		class="btn"
+		class:btn-primary={logMode === 'dev'}
+		class:btn-outline-secondary={logMode !== 'dev'}
 		on:click={() => (logMode = 'dev')}
-		class:active={logMode === 'dev'}
 	>
 		Dev
 	</button>
 </div>
+
 {#if logMode === 'info'}
 	{#if logsInfo.length}
 		<ul class="border">
 			{#each logsInfo as line}
-				<li>{line}</li>
+				<li
+					class={line.toLowerCase().includes('error')
+						? 'text-red-600'
+						: line.toLowerCase().includes('warning')
+							? 'text-yellow-500'
+							: ''}
+				>
+					{line}
+				</li>
 			{/each}
 		</ul>
 	{:else}
@@ -61,9 +72,17 @@
 	{/if}
 {:else if logMode === 'dev'}
 	{#if logsDev.length}
-		<ul>
+		<ul class="border">
 			{#each logsDev as line}
-				<li>{line}</li>
+				<li
+					class={line.toLowerCase().includes('error')
+						? 'text-red-600'
+						: line.toLowerCase().includes('warning')
+							? 'text-yellow-500'
+							: ''}
+				>
+					{line}
+				</li>
 			{/each}
 		</ul>
 	{:else}
