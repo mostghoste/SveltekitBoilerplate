@@ -9,20 +9,24 @@ export const actions = {
   // ---------------------------------------------
   // A) Upload & Parse (no DB writes)
   // ---------------------------------------------
+  // ---------------------------------------------
+  // A) Upload & Parse (no DB writes)
+  // ---------------------------------------------
   parseFile: async ({ request }) => {
     console.log('[parseFile] Action triggered...');
     const formData = await request.formData();
 
-    // Dump formData entries to the server console for debugging
+    // Dump formData entries for debugging
     for (const [key, val] of formData.entries()) {
       console.log(`[parseFile] formData: key="${key}", value="${val}"`);
     }
 
     const file = formData.get('file');
 
-    if (!file) {
-      console.log('[parseFile] No file was found in form data!');
-      return fail(400, { error: 'No file provided' });
+    // Check that a file was provided and it's not empty.
+    if (!file || (file instanceof File && file.size === 0)) {
+      console.log('[parseFile] No file provided or file is empty!');
+      return fail(400, { error: 'No file provided or file is empty' });
     }
 
     // The logs array we also return to the client side
@@ -309,22 +313,47 @@ export const actions = {
   }
 };
 
-/**
- * Minimal CSV parser using semicolons as the delimiter.
- * Adjust as needed if your CSV is comma-delimited or something else.
- */
 function parseCSV(contents) {
   console.log('[parseCSV] Starting parse with semicolons');
+  
+  // Split contents by newline and filter out empty lines.
   const lines = contents.split('\n').filter((r) => r.trim() !== '');
   if (lines.length < 2) {
     throw new Error('No data rows found in CSV (or file is empty).');
   }
 
-  // The first line is the header row
+  // Parse the header row.
   const headers = lines[0].split(';').map((h) => h.trim());
   console.log('[parseCSV] Headers:', headers);
 
-  // Parse each subsequent row
+  // Define required headers.
+  const requiredHeaders = ['category', 'part_name', 'part_code', 'price (without VAT)'];
+
+  // Check if all required headers are present.
+  const missingHeaders = requiredHeaders.filter((h) => !headers.includes(h));
+  if (missingHeaders.length > 0) {
+    throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
+  }
+
+  // Define a helper to test allowed optional header patterns.
+  const isAllowedOptional = (header) => {
+    // Matches part_name_* where * is exactly two letters (e.g., part_name_en)
+    if (/^part_name_[a-zA-Z]{2}$/.test(header)) return true;
+    // Matches price_* where * is any non-empty string (e.g., price_premium)
+    if (/^price_.+/.test(header)) return true;
+    // Explicitly allow 'image'
+    if (header === 'image') return true;
+    return false;
+  };
+
+  // Log a warning for each header that is neither required nor allowed as optional.
+  headers.forEach(header => {
+    if (!requiredHeaders.includes(header) && !isAllowedOptional(header)) {
+      console.warn(`[parseCSV] Warning: Unexpected header found: '${header}'`);
+    }
+  });
+
+  // Parse each subsequent data row.
   const dataRows = lines.slice(1).map((line, idx) => {
     const values = line.split(';').map((v) => v.trim());
     const obj = {};
