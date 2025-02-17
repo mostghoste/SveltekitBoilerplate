@@ -313,6 +313,10 @@ export const actions = {
   }
 };
 
+/**
+ * Robust CSV parser using semicolons as the delimiter.
+ * It validates the presence of required headers and logs warnings for unrecognized headers.
+ */
 function parseCSV(contents) {
   console.log('[parseCSV] Starting parse with semicolons');
   

@@ -1,9 +1,7 @@
 <script>
-	// Page data from the server load or any last action
-	export let data;
-
-	let logs = data?.logs ?? [];
-	let previewRows = data?.previewRows ?? [];
+	export let form;
+	let logs = form?.logs ?? [];
+	let previewRows = form?.previewRows ?? [];
 	let file; // used for the parse-file form
 
 	// If parseFile was successful, we can show the preview table
@@ -11,7 +9,7 @@
 	$: showPreview = previewRows.length > 0;
 
 	// We'll keep track of the final success/failure from confirm
-	let confirmMessage = data?.message || '';
+	let confirmMessage = form?.message || '';
 </script>
 
 <h1 class="text-xl">Excel/CSV Upload and Confirmation</h1>
