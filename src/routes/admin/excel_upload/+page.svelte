@@ -4,7 +4,7 @@
 	export let data;
 	export let form;
 
-	// The full parsed rows are available in data.previewRows.
+	// The full parsed rows are available in form.previewRows.
 	let previewRows = form?.previewRows ?? [];
 
 	// For display, only show the first 10 rows.
