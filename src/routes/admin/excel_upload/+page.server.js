@@ -60,18 +60,21 @@ export const actions = {
 
       // Validate images for each row using a for...of loop
       for (const row of rows) {
-        let productImage = row.image || null;
-        if (productImage) {
-          // Pass BOTH infoLogs and devLogs
-          const isValidImage = await validateImage(productImage, infoLogs, devLogs);
+        let imageError = false;
+        if (row.image && row.image.trim() !== '') {
+          const isValidImage = await validateImage(row.image, infoLogs, devLogs);
           if (!isValidImage) {
             infoLogs.push(
-              `Warning: Image "${productImage}" is missing or invalid for product "${row.part_code ?? 'unknown'}". Setting image to null.`
+              `Warning: Image "${row.image}" is missing or invalid for product "${row.part_code ?? 'unknown'}".`
             );
-            row.image = null;
+            imageError = true;
           }
         }
+        // Mark the row as errored if it already had CSV errors or if image validation failed.
+        row.errored = (row.errors && row.errors.length > 0) || imageError;
+        row.imageError = imageError;
       }
+
       infoLogs.push(`Parsed ${rows.length} rows successfully.`);
       devLogs.push(`Parsed ${rows.length} rows successfully.`);
       console.log(`[parseFile] Done. Rows: ${rows.length}`);

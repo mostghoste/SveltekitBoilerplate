@@ -96,7 +96,7 @@
 	<table class="table-auto border-collapse w-full">
 		<thead>
 			<tr>
-				{#each Object.keys(displayRows[0]) as header}
+				{#each Object.keys(displayRows[0]).filter((key) => key !== 'errored') as header}
 					<th class="border p-2">{header}</th>
 				{/each}
 			</tr>
@@ -104,14 +104,14 @@
 		<tbody>
 			{#each displayRows as row}
 				<tr>
-					{#each Object.keys(row) as key}
-						<td class="border p-2">
+					{#each Object.keys(row).filter((key) => key !== 'errored') as key}
+						<td class="border p-2 text-center">
 							{#if key === 'image'}
 								{#if row[key]}
 									<img
 										src={`https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/${row[key]}`}
-										alt="Product Image"
-										class="w-16 h-16 object-cover"
+										alt="missing"
+										class="w-16 h-16 object-cover flex justify-center items-center text-red-600"
 									/>
 								{:else}
 									No image
@@ -143,4 +143,29 @@
 <!-- 4) Display Confirm Upload Result -->
 {#if form?.message}
 	<p class="text-green-600 font-bold">Result: {form.message}</p>
+{/if}
+
+<!-- 4) Table showing rows that have errors (excluding the "errored" column) -->
+<h2 class="text-lg">Rows with Errors</h2>
+{#if previewRows.filter((row) => row.errored).length}
+	<table class="table-auto border-collapse w-full">
+		<thead>
+			<tr>
+				{#each Object.keys(previewRows[0]).filter((key) => key !== 'errored') as header}
+					<th class="border p-2">{header}</th>
+				{/each}
+			</tr>
+		</thead>
+		<tbody>
+			{#each previewRows.filter((row) => row.errored) as row}
+				<tr>
+					{#each Object.keys(row).filter((key) => key !== 'errored') as key}
+						<td class="border p-2">{row[key]}</td>
+					{/each}
+				</tr>
+			{/each}
+		</tbody>
+	</table>
+{:else}
+	<p>No rows with errors.</p>
 {/if}
