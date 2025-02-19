@@ -9,24 +9,18 @@ export const actions = {
   // ---------------------------------------------
   // A) Upload & Parse (no DB writes)
   // ---------------------------------------------
-  // ---------------------------------------------
-  // A) Upload & Parse (no DB writes)
-  // ---------------------------------------------
   parseFile: async ({ request }) => {
     console.log('[parseFile] Action triggered...');
     const formData = await request.formData();
-    // Separate log arrays for info and developer levels.
     const infoLogs = [];
     const devLogs = [];
 
-    // Dump formData entries for debugging
+    // Log formData keys
     for (const [key, val] of formData.entries()) {
       console.log(`[parseFile] formData: key="${key}", value="${val}"`);
     }
 
     const file = formData.get('file');
-
-    // Check that a file was provided and it's not empty.
     if (!file || (file instanceof File && file.size === 0)) {
       infoLogs.push(`[Error] No file was provided!`);
       devLogs.push(`[Error] No file was provided!`);
@@ -50,7 +44,6 @@ export const actions = {
       infoLogs.push('[parseFile] Parsing CSV with semicolon delimiter');
       devLogs.push('[parseFile] Parsing CSV with semicolon delimiter');
 
-      // Get the parse result (an object with success and rows)
       const parseResult = parseCSV(contents, infoLogs, devLogs);
       if (!parseResult.success) {
         infoLogs.push(`Parsing encountered errors: ${parseResult.message}`);
@@ -64,14 +57,12 @@ export const actions = {
         });
       }
       const rows = parseResult.rows;
-
       infoLogs.push(`Parsed ${rows.length} rows successfully.`);
       devLogs.push(`Parsed ${rows.length} rows successfully.`);
       console.log(`[parseFile] Done. Rows: ${rows.length}`);
-      // Return all parsed rows along with separate logs.
       return {
         success: true,
-        previewRows: rows, // rows is now an array
+        previewRows: rows,
         logsInfo: infoLogs,
         logsDev: devLogs
       };
@@ -94,7 +85,7 @@ export const actions = {
     const supabase = locals.supabase;
     const formData = await request.formData();
 
-    // Dump formData for debugging
+    // Dump formData keys for debugging
     for (const [key, val] of formData.entries()) {
       console.log(`[confirmUpload] formData: key="${key}", value.length="${String(val).length}"`);
     }
@@ -107,131 +98,288 @@ export const actions = {
 
     const rows = JSON.parse(previewJson);
     console.log(`[confirmUpload] Received ${rows.length} rows to insert...`);
-
-    // We’ll collect logs to show in the UI
     const logs = [];
 
-    // Identify any columns that start with "price_"
+    // Identify columns from the CSV
     const headers = rows.length ? Object.keys(rows[0]) : [];
+
+    // 1) Make sure we have any needed customer groups (price_* columns)
     const priceHeaders = headers.filter((h) => h.startsWith('price_'));
+    for (const header of priceHeaders) {
+      const groupName = header.slice('price_'.length);
+      logs.push(`Checking/creating customer group: ${groupName}`);
+      const { data: existingGroup, error: groupErr } = await supabase
+        .from('customer_groups')
+        .select('id')
+        .eq('group_name', groupName)
+        .single();
 
-    try {
-      // 1) Ensure that all needed customer groups exist
-      for (const header of priceHeaders) {
-        const groupName = header.slice('price_'.length);
-        console.log(`[confirmUpload] Checking group "${groupName}"`);
-
-        const { data: existingGroup, error: groupErr } = await supabase
+      if (groupErr && groupErr.code !== 'PGRST116') {
+        const msg = `Error checking group "${groupName}": ${groupErr.message}`;
+        logs.push(msg);
+        console.error(msg);
+        continue;
+      }
+      if (!existingGroup) {
+        logs.push(`Group "${groupName}" does not exist; creating...`);
+        const { error: insertErr } = await supabase
           .from('customer_groups')
+          .insert({ group_name: groupName, group_description: `Auto-created group: ${groupName}` });
+        if (insertErr) {
+          const msg = `Error inserting group "${groupName}": ${insertErr.message}`;
+          logs.push(msg);
+          console.error(msg);
+        } else {
+          logs.push(`Created new group "${groupName}"`);
+        }
+      } else {
+        logs.push(`Group "${groupName}" already exists`);
+      }
+    }
+
+    // 2) Identify category/product translation columns
+    //    (We skip 'en' for categories, because it's the default in categories.category_name)
+    const categoryLangHeaders = headers.filter((h) => h.startsWith('category_name_'));
+    const productLangHeaders = headers.filter((h) => h.startsWith('part_name_'));
+
+    // For category translations, we'll skip the 'en' suffix because we store that in categories.category_name
+    function isNonEnglishCategoryHeader(header) {
+      // e.g. "category_name_lt", "category_name_ru"
+      if (!header.startsWith('category_name_')) return false;
+      const suffix = header.replace('category_name_', '').toLowerCase();
+      return suffix !== 'en'; // skip the 'en' column
+    }
+    const categoryTranslationHeaders = categoryLangHeaders.filter(isNonEnglishCategoryHeader);
+
+    // 3) We may need languages for the product translations or the non-English category columns
+    //    e.g. 'lt', 'ru'
+    const allLangCodes = [];
+    for (const h of categoryTranslationHeaders) {
+      // e.g. "category_name_lt" => "lt"
+      allLangCodes.push(h.replace('category_name_', '').toLowerCase());
+    }
+    for (const h of productLangHeaders) {
+      // e.g. "part_name_lt" => "lt"
+      const code = h.replace('part_name_', '').toLowerCase();
+      // If it's exactly "part_name", we skip. But you said you always have part_name_lt, part_name_ru, etc.
+      if (code !== 'name') {
+        allLangCodes.push(code);
+      }
+    }
+    // Unique set of language codes
+    const uniqueLangCodes = [...new Set(allLangCodes)];
+
+    // We'll store { [code]: languageId } for quick lookups
+    const langMap = {};
+
+    async function getOrCreateLanguage(code) {
+      if (langMap[code]) return langMap[code];
+      const { data: existingLang, error: langErr } = await supabase
+        .from('languages')
+        .select('id')
+        .eq('code', code)
+        .single();
+
+      if (langErr && langErr.code !== 'PGRST116') {
+        logs.push(`Error checking language "${code}": ${langErr.message}`);
+        console.error(`Error checking language "${code}":`, langErr);
+        return null;
+      }
+      if (!existingLang) {
+        logs.push(`Language "${code}" does not exist; creating...`);
+        const { data: newLang, error: newLangErr } = await supabase
+          .from('languages')
+          .insert({ code, name: `Auto-created ${code}` })
           .select('id')
-          .eq('group_name', groupName)
+          .single();
+        if (newLangErr) {
+          logs.push(`Error inserting language "${code}": ${newLangErr.message}`);
+          console.error(`Error inserting language "${code}":`, newLangErr);
+          return null;
+        }
+        langMap[code] = newLang.id;
+        logs.push(`Created language "${code}" (id=${newLang.id})`);
+        return newLang.id;
+      } else {
+        langMap[code] = existingLang.id;
+        logs.push(`Language "${code}" already exists (id=${existingLang.id})`);
+        return existingLang.id;
+      }
+    }
+
+    // Create or fetch each language code we need
+    for (const code of uniqueLangCodes) {
+      await getOrCreateLanguage(code);
+    }
+
+    // 4) Process each CSV row
+    for (const row of rows) {
+      try {
+        // --- A) Category: store row.category => categories.id_alt
+        //                 store row.category_name_en => categories.category_name
+        const altId = row.category?.trim(); // e.g. "10" or "11"
+        if (!altId) {
+          const msg = `Skipping row with no category code: ${JSON.stringify(row)}`;
+          logs.push(msg);
+          console.warn(msg);
+          continue;
+        }
+
+        // We'll store the English name in categories.category_name
+        // or fallback if empty
+        let catNameEn = row.category_name_en?.trim() || '';
+        if (!catNameEn) catNameEn = `Category ${altId}`; // fallback
+
+        // 1) find or create the category by id_alt
+        const { data: existingCat, error: catErr } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('id_alt', altId)
           .single();
 
-        if (groupErr && groupErr.code !== 'PGRST116') {
-          const msg = `Error checking group "${groupName}": ${groupErr.message}`;
+        let categoryId;
+        if (catErr && catErr.code !== 'PGRST116') {
+          const msg = `Error checking category id_alt="${altId}": ${catErr.message}`;
           logs.push(msg);
           console.error(msg);
           continue;
         }
 
-        if (!existingGroup) {
-          logs.push(`Group "${groupName}" does not exist; creating...`);
-          const { error: insertErr } = await supabase
-            .from('customer_groups')
-            .insert({ group_name: groupName });
-
-          if (insertErr) {
-            const msg = `Error inserting group "${groupName}": ${insertErr.message}`;
-            logs.push(msg);
-            console.error(msg);
-          } else {
-            logs.push(`Created new group "${groupName}"`);
-          }
-        } else {
-          logs.push(`Group "${groupName}" already exists`);
-        }
-      }
-
-      // 2) Insert/Update each row
-      for (const row of rows) {
-        try {
-          const {
-            category,
-            part_name,
-            part_name_lt,
-            part_name_uk,
-            part_code,
-            price,
-            image
-          } = row;
-
-          console.log(`[confirmUpload] Processing row => code:${part_code}, name:${part_name}`);
-
-          // --- A) Find or create category
-          let categoryId = null;
-          if (category) {
-            const { data: existingCat, error: catErr } = await supabase
-              .from('categories')
-              .select('id')
-              .eq('category_name', category)
-              .single();
-
-            if (catErr && catErr.code !== 'PGRST116') {
-              const msg = `Error checking category "${category}" for "${part_name}": ${catErr.message}`;
-              logs.push(msg);
-              console.error(msg);
-              continue;
-            }
-
-            if (!existingCat) {
-              // Insert new category
-              logs.push(`Category "${category}" not found; creating...`);
-              const { data: newCat, error: newCatErr } = await supabase
-                .from('categories')
-                .insert({ category_name: category })
-                .select('id')
-                .single();
-
-              if (newCatErr) {
-                const msg = `Error inserting category "${category}" for product "${part_name}": ${newCatErr.message}`;
-                logs.push(msg);
-                console.error(msg);
-                continue;
-              }
-              categoryId = newCat.id;
-              logs.push(`Created category "${category}"`);
-            } else {
-              categoryId = existingCat.id;
-              logs.push(`Category "${category}" found (id=${categoryId})`);
-            }
-          }
-
-          // --- B) Check if product already exists by part_code
-          const { data: existingProduct, error: prodCheckErr } = await supabase
-            .from('products')
+        if (!existingCat) {
+          // Insert new category
+          logs.push(`Creating category with id_alt="${altId}", name="${catNameEn}"`);
+          const { data: newCat, error: newCatErr } = await supabase
+            .from('categories')
+            .insert({
+              id_alt: altId,
+              category_name: catNameEn
+            })
             .select('id')
-            .eq('part_code', part_code)
             .single();
 
-          if (prodCheckErr && prodCheckErr.code !== 'PGRST116') {
-            const msg = `Error checking product "${part_code}": ${prodCheckErr.message}`;
+          if (newCatErr) {
+            const msg = `Error inserting category id_alt="${altId}": ${newCatErr.message}`;
+            logs.push(msg);
+            console.error(msg);
+            continue;
+          }
+          categoryId = newCat.id;
+          logs.push(`Created category (id=${categoryId}) with id_alt="${altId}"`);
+        } else {
+          categoryId = existingCat.id;
+          logs.push(`Found existing category with id_alt="${altId}" (id=${categoryId})`);
+
+          // Optionally update the English name if you want to keep it in sync:
+          // const { error: updCatErr } = await supabase
+          //   .from('categories')
+          //   .update({ category_name: catNameEn })
+          //   .eq('id', categoryId);
+          // if (updCatErr) {
+          //   const msg = `Error updating category_name for id_alt="${altId}": ${updCatErr.message}`;
+          //   logs.push(msg);
+          //   console.error(msg);
+          // } else {
+          //   logs.push(`Updated category_name to "${catNameEn}" for id_alt="${altId}"`);
+          // }
+        }
+
+        // 2) For each non-English column (category_name_lt, category_name_ru, etc.),
+        //    create a row in category_translations if there's a value
+        for (const catHeader of categoryTranslationHeaders) {
+          // e.g. "category_name_lt" => "lt"
+          const code = catHeader.replace('category_name_', '').toLowerCase();
+          const translationVal = row[catHeader]?.trim() || '';
+          if (!translationVal) continue; // skip empty
+          const langId = langMap[code];
+          if (!langId) {
+            logs.push(`Skipping category translation: no langId for code="${code}"`);
+            continue;
+          }
+
+          // Check if translation already exists
+          const { data: existingCT, error: ctErr } = await supabase
+            .from('category_translations')
+            .select('id')
+            .eq('category_id', categoryId)
+            .eq('language_id', langId)
+            .single();
+
+          if (ctErr && ctErr.code !== 'PGRST116') {
+            const msg = `Error checking category_translations for cat_id=${categoryId}, lang_id=${langId}: ${ctErr.message}`;
             logs.push(msg);
             console.error(msg);
             continue;
           }
 
-          if (existingProduct) {
-            logs.push(`Product "${part_code}" already exists; skipping insert.`);
-            continue;
-          }
+          if (!existingCT) {
+            logs.push(`Inserting category translation for id_alt="${altId}", lang="${code}"`);
+            const { error: insertCTErr } = await supabase
+              .from('category_translations')
+              .insert({
+                category_id: categoryId,
+                language_id: langId,
+                category_name: translationVal
+              });
+            if (insertCTErr) {
+              const msg = `Error inserting category translation: ${insertCTErr.message}`;
+              logs.push(msg);
+              console.error(msg);
+            } else {
+              logs.push(`Created category translation for id_alt="${altId}", lang="${code}"`);
+            }
+          } else {
+            logs.push(`Updating category translation for id_alt="${altId}", lang="${code}"`);
+            const { error: updateCTErr } = await supabase
+              .from('category_translations')
+              .update({ category_name: translationVal })
+              .eq('id', existingCT.id);
 
-          // --- C) Insert product
-          const pPrice = parseFloat(String(price).replace(',', '.')) || 0;
+            if (updateCTErr) {
+              const msg = `Error updating category translation: ${updateCTErr.message}`;
+              logs.push(msg);
+              console.error(msg);
+            } else {
+              logs.push(`Updated category translation for id_alt="${altId}", lang="${code}"`);
+            }
+          }
+        }
+
+        // --- B) Product creation (same as your existing logic, but storing row.part_name as default)
+        // If you always have part_name as the default, we skip searching for part_name_en or such
+        const basePartName = row.part_name?.trim() || '(unnamed product)';
+        const partCode = row.part_code?.trim() || '';
+        if (!partCode) {
+          const msg = `Skipping row: no part_code. row=${JSON.stringify(row)}`;
+          logs.push(msg);
+          console.warn(msg);
+          continue;
+        }
+
+        // Check if product exists
+        const { data: existingProduct, error: prodCheckErr } = await supabase
+          .from('products')
+          .select('id')
+          .eq('part_code', partCode)
+          .single();
+
+        let productId = null;
+        if (prodCheckErr && prodCheckErr.code !== 'PGRST116') {
+          const msg = `Error checking product "${partCode}": ${prodCheckErr.message}`;
+          logs.push(msg);
+          console.error(msg);
+          continue;
+        }
+
+        if (existingProduct) {
+          productId = existingProduct.id;
+          logs.push(`Product "${partCode}" already exists (id=${productId}).`);
+        } else {
+          const pPrice = parseFloat(String(row['price (without VAT)'] || '').replace(',', '.')) || 0;
           const productData = {
-            part_name,
-            part_code,
+            part_name: basePartName,
+            part_code: partCode,
             price: pPrice,
-            image,
+            image: row.image || null,
             category_id: categoryId
           };
           logs.push(`Inserting product: ${JSON.stringify(productData)}`);
@@ -240,104 +388,139 @@ export const actions = {
             .insert(productData)
             .select('id')
             .single();
-
           if (prodErr) {
-            const msg = `Error inserting product "${part_name}": ${prodErr.message}`;
+            const msg = `Error inserting product "${basePartName}": ${prodErr.message}`;
             logs.push(msg);
             console.error(msg);
             continue;
           }
-          const productId = newProduct.id;
-          logs.push(`Inserted product "${part_name}" (id=${productId})`);
-
-          // --- D) Update translations
-          if (part_name_lt) {
-            const { error: ltErr } = await supabase
-              .from('product_translations')
-              .update({ part_name: part_name_lt })
-              .eq('product_id', productId)
-              .eq('language_id', 1);
-
-            if (ltErr) {
-              const msg = `Error updating LT name for "${part_name}": ${ltErr.message}`;
-              logs.push(msg);
-              console.error(msg);
-            } else {
-              logs.push(`Updated LT name for "${part_name}"`);
-            }
-          }
-
-          if (part_name_uk) {
-            const { error: ukErr } = await supabase
-              .from('product_translations')
-              .update({ part_name: part_name_uk })
-              .eq('product_id', productId)
-              .eq('language_id', 2);
-
-            if (ukErr) {
-              const msg = `Error updating UK name for "${part_name}": ${ukErr.message}`;
-              logs.push(msg);
-              console.error(msg);
-            } else {
-              logs.push(`Updated UK name for "${part_name}"`);
-            }
-          }
-
-          // --- E) Insert/Update custom group prices
-          for (const pHeader of priceHeaders) {
-            const groupName = pHeader.slice('price_'.length);
-            const rawVal = row[pHeader];
-            if (!rawVal) continue;
-
-            const groupPrice = parseFloat(String(rawVal).replace(',', '.')) || 0;
-            logs.push(`Updating custom price for group="${groupName}", product="${part_name}", val=${groupPrice}`);
-
-            // find group
-            const { data: grp, error: grpErr } = await supabase
-              .from('customer_groups')
-              .select('id')
-              .eq('group_name', groupName)
-              .single();
-            if (grpErr || !grp) {
-              const msg = `Missing group "${groupName}" for product "${part_name}": ${grpErr?.message}`;
-              logs.push(msg);
-              console.error(msg);
-              continue;
-            }
-
-            // update
-            const { error: priceErr } = await supabase
-              .from('prices')
-              .update({ price: groupPrice })
-              .eq('product_id', productId)
-              .eq('customer_group_id', grp.id);
-
-            if (priceErr) {
-              const msg = `Error updating price for "${part_name}" + "${groupName}": ${priceErr.message}`;
-              logs.push(msg);
-              console.error(msg);
-            } else {
-              logs.push(`Set custom price for "${part_name}" + "${groupName}" to ${groupPrice}`);
-            }
-          }
-
-        } catch (err) {
-          const msg = `Unexpected row error: ${err.message}`;
-          logs.push(msg);
-          console.error(msg);
+          productId = newProduct.id;
+          logs.push(`Inserted product "${basePartName}" (id=${productId})`);
         }
-      }
+        if (!productId) continue;
 
-      return {
-        success: true,
-        logs,
-        message: 'All rows processed!'
-      };
-    } catch (err) {
-      console.error('[confirmUpload] Outer error:', err);
-      logs.push(`Error: ${err.message}`);
-      return fail(400, { error: 'Confirm upload failed', logs });
+        // Product translations for part_name_lt, part_name_ru, etc.
+        for (const pHeader of productLangHeaders) {
+          // e.g. "part_name_lt" => "lt"
+          const code = pHeader.replace('part_name_', '').toLowerCase();
+          if (code === 'name') continue; // skip the base "part_name" itself
+          const translationVal = row[pHeader]?.trim() || '';
+          if (!translationVal) continue;
+          const langId = langMap[code];
+          if (!langId) continue;
+
+          // Upsert translation
+          const { data: existingPT, error: ptErr } = await supabase
+            .from('product_translations')
+            .select('id')
+            .eq('product_id', productId)
+            .eq('language_id', langId)
+            .single();
+
+          if (ptErr && ptErr.code !== 'PGRST116') {
+            const msg = `Error checking product_translations for product_id=${productId}, lang=${code}: ${ptErr.message}`;
+            logs.push(msg);
+            console.error(msg);
+            continue;
+          }
+
+          if (!existingPT) {
+            logs.push(`Inserting product translation for part_code="${partCode}", lang="${code}"`);
+            const { error: insertPTErr } = await supabase
+              .from('product_translations')
+              .insert({
+                product_id: productId,
+                language_id: langId,
+                part_name: translationVal
+              });
+            if (insertPTErr) {
+              const msg = `Error inserting product translation: ${insertPTErr.message}`;
+              logs.push(msg);
+              console.error(msg);
+            } else {
+              logs.push(`Created product translation for part_code="${partCode}", lang="${code}"`);
+            }
+          } else {
+            logs.push(`Updating product translation for part_code="${partCode}", lang="${code}"`);
+            const { error: updatePTErr } = await supabase
+              .from('product_translations')
+              .update({ part_name: translationVal })
+              .eq('id', existingPT.id);
+
+            if (updatePTErr) {
+              const msg = `Error updating product translation: ${updatePTErr.message}`;
+              logs.push(msg);
+              console.error(msg);
+            } else {
+              logs.push(`Updated product translation for part_code="${partCode}", lang="${code}"`);
+            }
+          }
+        }
+
+        // --- C) Custom group prices (unchanged)
+        for (const pHeader of priceHeaders) {
+          const groupName = pHeader.slice('price_'.length);
+          const rawVal = row[pHeader];
+          if (!rawVal) continue;
+          const groupPrice = parseFloat(String(rawVal).replace(',', '.')) || 0;
+          logs.push(`Updating custom price for group="${groupName}", product="${partCode}", val=${groupPrice}`);
+          const { data: grp, error: grpErr } = await supabase
+            .from('customer_groups')
+            .select('id')
+            .eq('group_name', groupName)
+            .single();
+          if (grpErr || !grp) {
+            const msg = `Missing group "${groupName}" for product "${partCode}": ${grpErr?.message}`;
+            logs.push(msg);
+            console.error(msg);
+            continue;
+          }
+          // Try update first
+          const { data: updatedPrice, error: priceErr } = await supabase
+            .from('prices')
+            .update({ price: groupPrice })
+            .eq('product_id', productId)
+            .eq('customer_group_id', grp.id)
+            .select('*');
+          if (priceErr) {
+            const msg = `Error updating price for product "${partCode}" + group="${groupName}": ${priceErr.message}`;
+            logs.push(msg);
+            console.error(msg);
+            continue;
+          }
+          if (updatedPrice.length === 0) {
+            // Insert if no row found
+            const { error: insertPriceErr } = await supabase
+              .from('prices')
+              .insert({
+                product_id: productId,
+                customer_group_id: grp.id,
+                price: groupPrice
+              });
+            if (insertPriceErr) {
+              const msg = `Error inserting price for product "${partCode}" + group="${groupName}": ${insertPriceErr.message}`;
+              logs.push(msg);
+              console.error(msg);
+            } else {
+              logs.push(`Inserted custom price for "${partCode}" + "${groupName}" = ${groupPrice}`);
+            }
+          } else {
+            logs.push(`Updated custom price for "${partCode}" + "${groupName}" to ${groupPrice}`);
+          }
+        }
+      } catch (err) {
+        const msg = `Unexpected row error: ${err.message}`;
+        logs.push(msg);
+        console.error(msg);
+      }
     }
+
+    // All done
+    return {
+      success: true,
+      logs,
+      message: 'All rows processed!'
+    };
   }
 };
 
@@ -365,20 +548,14 @@ export const actions = {
  */
 function parseCSV(contents, infoLogs = [], devLogs = []) {
   devLogs.push('[parseCSV] Starting parse with semicolons');
-
-  // Split file into nonempty lines.
   const lines = contents.split('\n').filter((r) => r.trim() !== '');
   if (lines.length < 2) {
     const msg = 'No data rows found in CSV (or file is empty).';
     infoLogs.push(`[parseCSV] ${msg}`);
     throw new Error(msg);
   }
-
-  // Parse the header row.
   const headers = lines[0].split(';').map((h) => h.trim());
   devLogs.push(`[parseCSV] Headers: ${JSON.stringify(headers)}`);
-
-  // Define required headers.
   const requiredHeaders = ['category', 'part_name', 'part_code', 'price (without VAT)'];
   const missingHeaders = requiredHeaders.filter((h) => !headers.includes(h));
   if (missingHeaders.length > 0) {
@@ -386,30 +563,23 @@ function parseCSV(contents, infoLogs = [], devLogs = []) {
     infoLogs.push(`[parseCSV] ${msg}`);
     throw new Error(msg);
   }
-
-  // Log detected optional headers.
-  // Language groups: columns like part_name_ru, part_name_en, part_name_gb.
   const languageGroups = headers.filter(header => /^part_name_(ru|en|gb)$/i.test(header));
   devLogs.push(`[parseCSV] Detected language groups: ${JSON.stringify(languageGroups)}`);
   languageGroups.forEach(lang => {
     devLogs.push(`[parseCSV] Adding language group: ${lang}`);
   });
-  // Customer groups: any column starting with price_
   const customerGroups = headers.filter(header => /^price_.+/i.test(header));
   devLogs.push(`[parseCSV] Detected customer groups: ${JSON.stringify(customerGroups)}`);
   customerGroups.forEach(group => {
     devLogs.push(`[parseCSV] Adding customer group: ${group}`);
   });
-
-  // Helper: allowed optional headers.
   const isAllowedOptional = (header) => {
     if (/^part_name_[a-zA-Z]{2}$/.test(header)) return true;
     if (/^price_.+/.test(header)) return true;
     if (header === 'image') return true;
+    if (/^category_name_.+/.test(header)) return true;
     return false;
   };
-
-  // Log warnings for any headers that aren’t allowed.
   headers.forEach((header) => {
     if (!requiredHeaders.includes(header) && !isAllowedOptional(header)) {
       const warnMsg = `[parseCSV] Warning: Unexpected header found: '${header}'`;
@@ -417,82 +587,57 @@ function parseCSV(contents, infoLogs = [], devLogs = []) {
       devLogs.push(warnMsg);
     }
   });
-
   const dataRows = [];
-  let globalHasErrors = false; // flag if any row fails validation
-
-  // Process each data line.
+  let globalHasErrors = false;
   lines.slice(1).forEach((line, idx) => {
-    const rowNumber = idx + 2; // +2 because headers are on line 1
+    const rowNumber = idx + 2;
     const values = line.split(';').map((v) => v.trim());
     const row = {};
     headers.forEach((header, i) => {
       row[header] = values[i] ?? '';
     });
-
-    // Validate row:
     const rowErrors = [];
-
-    // 1. Required fields must be nonempty.
     requiredHeaders.forEach((r) => {
       if (!row[r] || row[r].trim() === '') {
         rowErrors.push(`Missing value for '${r}'`);
       }
     });
-
-    // 2. Validate price: must be parsed as a double.
     const priceVal = row['price (without VAT)'];
     const parsedPrice = parseFloat(priceVal.replace(',', '.'));
     if (isNaN(parsedPrice)) {
       rowErrors.push(`Invalid price value '${priceVal}' in 'price (without VAT)'`);
     } else {
-      // Save parsed number.
       row['price (without VAT)'] = parsedPrice;
     }
-
-    // 3. Validate image: if provided, must end in .jpg, .jpeg, or .png.
     if (row['image'] && row['image'].trim() !== '') {
       if (!/\.(jpe?g|png)$/i.test(row['image'])) {
-        rowErrors.push(
-          `Invalid image format '${row['image']}'. Must end with .jpg, .jpeg, or .png`
-        );
+        rowErrors.push(`Invalid image format '${row['image']}'. Must end with .jpg, .jpeg, or .png`);
       }
     }
-
-    // Log row errors if any.
     if (rowErrors.length > 0) {
       globalHasErrors = true;
       const errorMsg = `[parseCSV] [Error] Row ${rowNumber} failed validation: ${rowErrors.join('; ')}`;
       infoLogs.push(errorMsg);
       devLogs.push(errorMsg);
-      // Attach errors to the row so the frontend can see them.
       row.errors = rowErrors;
     }
-
     devLogs.push(`[parseCSV] Parsed row ${rowNumber}: ${JSON.stringify(row)}`);
-
-    // Filter row: keep only keys that are required or allowed optional.
     const filteredRow = {};
     Object.keys(row).forEach((key) => {
       if (requiredHeaders.includes(key) || isAllowedOptional(key)) {
         filteredRow[key] = row[key];
       }
     });
-    // Attach errors if any.
     if (row.errors) {
       filteredRow.errors = row.errors;
     }
-
     dataRows.push(filteredRow);
   });
-
-  // If any row had errors, mark the overall parse as failed.
   if (globalHasErrors) {
     const msg = `[parseCSV] Failed parse. One or more rows failed validation.`;
     infoLogs.push(msg);
     devLogs.push(msg);
     return { success: false, rows: dataRows, message: msg };
   }
-
   return { success: true, rows: dataRows };
 }
