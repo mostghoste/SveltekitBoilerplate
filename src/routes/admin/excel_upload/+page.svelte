@@ -105,7 +105,21 @@
 			{#each displayRows as row}
 				<tr>
 					{#each Object.keys(row) as key}
-						<td class="border p-2">{row[key]}</td>
+						<td class="border p-2">
+							{#if key === 'image'}
+								{#if row[key]}
+									<img
+										src={`https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/${row[key]}`}
+										alt="Product Image"
+										class="w-16 h-16 object-cover"
+									/>
+								{:else}
+									No image
+								{/if}
+							{:else}
+								{row[key]}
+							{/if}
+						</td>
 					{/each}
 				</tr>
 			{/each}

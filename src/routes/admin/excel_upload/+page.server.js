@@ -57,6 +57,21 @@ export const actions = {
         });
       }
       const rows = parseResult.rows;
+
+      // Validate images for each row using a for...of loop
+      for (const row of rows) {
+        let productImage = row.image || null;
+        if (productImage) {
+          // Pass BOTH infoLogs and devLogs
+          const isValidImage = await validateImage(productImage, infoLogs, devLogs);
+          if (!isValidImage) {
+            infoLogs.push(
+              `Warning: Image "${productImage}" is missing or invalid for product "${row.part_code ?? 'unknown'}". Setting image to null.`
+            );
+            row.image = null;
+          }
+        }
+      }
       infoLogs.push(`Parsed ${rows.length} rows successfully.`);
       devLogs.push(`Parsed ${rows.length} rows successfully.`);
       console.log(`[parseFile] Done. Rows: ${rows.length}`);
@@ -161,7 +176,7 @@ export const actions = {
     for (const h of productLangHeaders) {
       // e.g. "part_name_lt" => "lt"
       const code = h.replace('part_name_', '').toLowerCase();
-      // If it's exactly "part_name", we skip. But you said you always have part_name_lt, part_name_ru, etc.
+      // If it's exactly "part_name", we skip.
       if (code !== 'name') {
         allLangCodes.push(code);
       }
@@ -225,8 +240,7 @@ export const actions = {
           continue;
         }
 
-        // We'll store the English name in categories.category_name
-        // or fallback if empty
+        // We'll store the English name in categories.category_name or fallback if empty
         let catNameEn = row.category_name_en?.trim() || '';
         if (!catNameEn) catNameEn = `Category ${altId}`; // fallback
 
@@ -268,23 +282,10 @@ export const actions = {
         } else {
           categoryId = existingCat.id;
           logs.push(`Found existing category with id_alt="${altId}" (id=${categoryId})`);
-
-          // Optionally update the English name if you want to keep it in sync:
-          // const { error: updCatErr } = await supabase
-          //   .from('categories')
-          //   .update({ category_name: catNameEn })
-          //   .eq('id', categoryId);
-          // if (updCatErr) {
-          //   const msg = `Error updating category_name for id_alt="${altId}": ${updCatErr.message}`;
-          //   logs.push(msg);
-          //   console.error(msg);
-          // } else {
-          //   logs.push(`Updated category_name to "${catNameEn}" for id_alt="${altId}"`);
-          // }
         }
 
         // 2) For each non-English column (category_name_lt, category_name_ru, etc.),
-        //    create a row in category_translations if there's a value
+        //    create or update a row in category_translations if there's a value
         for (const catHeader of categoryTranslationHeaders) {
           // e.g. "category_name_lt" => "lt"
           const code = catHeader.replace('category_name_', '').toLowerCase();
@@ -344,8 +345,7 @@ export const actions = {
           }
         }
 
-        // --- B) Product creation (same as your existing logic, but storing row.part_name as default)
-        // If you always have part_name as the default, we skip searching for part_name_en or such
+        // --- B) Product creation
         const basePartName = row.part_name?.trim() || '(unnamed product)';
         const partCode = row.part_code?.trim() || '';
         if (!partCode) {
@@ -379,7 +379,7 @@ export const actions = {
             part_name: basePartName,
             part_code: partCode,
             price: pPrice,
-            image: row.image || null,
+            image: productImage,
             category_id: categoryId
           };
           logs.push(`Inserting product: ${JSON.stringify(productData)}`);
@@ -457,7 +457,7 @@ export const actions = {
           }
         }
 
-        // --- C) Custom group prices (unchanged)
+        // --- C) Custom group prices
         for (const pHeader of priceHeaders) {
           const groupName = pHeader.slice('price_'.length);
           const rawVal = row[pHeader];
@@ -640,4 +640,42 @@ function parseCSV(contents, infoLogs = [], devLogs = []) {
     return { success: false, rows: dataRows, message: msg };
   }
   return { success: true, rows: dataRows };
+}
+
+/**
+ * Validate the product image by sending a HEAD request to the Supabase storage URL.
+ * - Success -> devLogs
+ * - Error/Invalid -> infoLogs
+ *
+ * @param {string} imageName - The image filename.
+ * @param {Array<string>} infoLogs - Info logs array for errors/invalid messages.
+ * @param {Array<string>} devLogs - Dev logs array for successful messages.
+ * @returns {Promise<boolean>} - Returns true if the image is valid, false otherwise.
+ */
+async function validateImage(imageName, infoLogs, devLogs) {
+  if (!imageName || imageName.trim() === '') {
+    // If the name is empty or null, treat as invalid
+    infoLogs.push('Image validation failed: no image name provided.');
+    return false;
+  }
+
+  const imageUrl = `https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/${imageName}`;
+
+  try {
+    // Use HEAD so we don't download the entire file
+    const response = await fetch(imageUrl, { method: 'HEAD' });
+    if (!response.ok) {
+      // If the HEAD request fails or returns a non-OK status, log to infoLogs
+      console.error(`Image validation failed for ${imageUrl}: Status ${response.status}`);
+      return false;
+    }
+    // On success, log to devLogs
+    devLogs.push(`Image validated successfully: ${imageUrl}`);
+    return true;
+  } catch (error) {
+    // Any fetch error also goes to infoLogs
+    infoLogs.push(`Error fetching image ${imageUrl}: ${error.message}`);
+    console.error(`Error fetching image ${imageUrl}: ${error.message}`);
+    return false;
+  }
 }
