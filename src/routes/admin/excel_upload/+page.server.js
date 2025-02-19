@@ -125,6 +125,7 @@ export const actions = {
     const priceHeaders = headers.filter((h) => h.startsWith('price_'));
     for (const header of priceHeaders) {
       const groupName = header.slice('price_'.length);
+      console.log(`Checking/creating customer group: ${groupName}`)
       logs.push(`Checking/creating customer group: ${groupName}`);
       const { data: existingGroup, error: groupErr } = await supabase
         .from('customer_groups')
@@ -139,10 +140,11 @@ export const actions = {
         continue;
       }
       if (!existingGroup) {
+        console.log(`Group "${groupName}" does not exist; creating...`)
         logs.push(`Group "${groupName}" does not exist; creating...`);
         const { error: insertErr } = await supabase
           .from('customer_groups')
-          .insert({ group_name: groupName, group_description: `Auto-created group: ${groupName}` });
+          .upsert({ group_name: groupName, group_description: `Auto-created group: ${groupName}` });
         if (insertErr) {
           const msg = `Error inserting group "${groupName}": ${insertErr.message}`;
           logs.push(msg);
@@ -382,7 +384,7 @@ export const actions = {
             part_name: basePartName,
             part_code: partCode,
             price: pPrice,
-            image: productImage,
+            image: row.image,
             category_id: categoryId
           };
           logs.push(`Inserting product: ${JSON.stringify(productData)}`);
