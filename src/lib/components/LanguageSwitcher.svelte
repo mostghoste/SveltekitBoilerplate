@@ -14,7 +14,8 @@
 		uk: '🇺🇦', // Ukrainian
 		lt: '🇱🇹', // Lithuanian
 		fr: '🇫🇷', // French
-		es: '🇪🇸'  // Spanish
+		es: '🇪🇸', // Spanish
+		ru: '🇷🇺' // Russian
 	};
 
 	// Close dropdown on outside click
@@ -38,7 +39,7 @@
 		class="btn btn-ghost"
 		aria-label="Current language"
 	>
-	<span class="text-2xl">{flagMap[currentLanguage] || '🌐'}</span>
+		<span class="text-2xl">{flagMap[currentLanguage] || '🌐'}</span>
 	</button>
 	{#if showDropdown}
 		<div class="dropdown-menu absolute right-0 mt-2 w-32 bg-white shadow-lg rounded-lg">
