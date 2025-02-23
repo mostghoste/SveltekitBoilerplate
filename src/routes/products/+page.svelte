@@ -104,12 +104,12 @@
             product_translations!inner(language_id, part_name),
             prices(price),
             categories(category_name)
-            `,
-							{ count: 'exact' }
+            `
 						)
 						.eq('prices.customer_group_id', customerGroupId)
 						.eq('product_translations.language_id', languageId)
-						.ilike('product_translations.part_name', `%${searchTerm}%`);
+						.ilike('product_translations.part_name', `%${searchTerm}%`)
+						.range(0, 1000); // Get all matching products to handle pagination locally
 
 					const partCodeQuery = supabase
 						.from('products')
@@ -122,12 +122,12 @@
             product_translations!inner(language_id, part_name),
             prices(price),
             categories(category_name)
-            `,
-							{ count: 'exact' }
+            `
 						)
 						.eq('prices.customer_group_id', customerGroupId)
 						.eq('product_translations.language_id', languageId)
-						.ilike('part_code', `%${searchTerm}%`);
+						.ilike('part_code', `%${searchTerm}%`)
+						.range(0, 1000); // Get all matching products to handle pagination locally
 
 					if (selectedCategoryId) {
 						translatedQuery.eq('category_id', selectedCategoryId);
@@ -146,19 +146,30 @@
 						new Map(combinedData.map((item) => [item.id, item])).values()
 					);
 
-					// Handle the combined results
-					if (uniqueData.length > 0) {
-						const mappedProducts = uniqueData.map((p) => ({
+					// Sort the unique data to ensure consistent ordering
+					uniqueData.sort((a, b) => a.id - b.id);
+
+					// Calculate the slice for current page
+					const startIndex = (page - 1) * limit;
+					const endIndex = startIndex + limit;
+					const paginatedData = uniqueData.slice(startIndex, endIndex);
+
+					// Handle the paginated results
+					if (paginatedData.length > 0) {
+						const mappedProducts = paginatedData.map((p) => ({
 							...p,
 							part_name: p.product_translations[0].part_name
 						}));
 						products = [...products, ...mappedProducts];
 						page++;
+
+						// Check if we've reached the end
+						allLoaded = endIndex >= uniqueData.length;
 					} else {
 						allLoaded = true;
 					}
 
-					totalCount = Math.max(translatedResults.count || 0, partCodeResults.count || 0);
+					totalCount = uniqueData.length;
 				} else {
 					// For English, use the original simple search
 					query = query.or(`part_name.ilike.%${searchTerm}%,part_code.ilike.%${searchTerm}%`);
@@ -168,6 +179,7 @@
 					if (productData?.length > 0) {
 						products = [...products, ...productData];
 						page++;
+						allLoaded = products.length >= count;
 					} else {
 						allLoaded = true;
 					}
@@ -191,6 +203,7 @@
 
 					products = [...products, ...mappedProducts];
 					page++;
+					allLoaded = products.length >= count;
 				} else {
 					allLoaded = true;
 				}
