@@ -59,25 +59,54 @@
 		if (loading || allLoaded) return;
 		loading = true;
 
+		// Build a base query
 		let query = supabase
 			.from('products')
+			// If we have a languageId that isn't English, join product_translations
 			.select(
-				`
-			id, image, part_code, part_name, category_id, 
-			categories(category_name), 
-			prices(price)
-		`,
+				languageId
+					? `
+          id,
+          image,
+          part_code,
+          category_id,
+          product_translations!inner(language_id, part_name),
+          prices(price),
+          categories(category_name)
+        `
+					: `
+          id,
+          image,
+          part_code,
+          part_name,
+          category_id,
+          prices(price),
+          categories(category_name)
+        `,
 				{ count: 'exact' }
 			)
 			.eq('prices.customer_group_id', customerGroupId)
 			.range((page - 1) * limit, page * limit - 1);
+
+		if (languageId) {
+			// Filter product_translations by the user’s language
+			query = query.eq('product_translations.language_id', languageId);
+		}
 
 		if (selectedCategoryId) {
 			query = query.eq('category_id', selectedCategoryId);
 		}
 
 		if (searchTerm.length >= 2) {
-			query = query.or(`part_name.ilike.%${searchTerm}%,part_code.ilike.%${searchTerm}%`);
+			if (languageId) {
+				// If using translations, search in product_translations.part_name and part_code
+				query = query.or(
+					`product_translations.part_name.ilike.%${searchTerm}%,part_code.ilike.%${searchTerm}%`
+				);
+			} else {
+				// Otherwise, search in the default products.part_name and part_code
+				query = query.or(`part_name.ilike.%${searchTerm}%,part_code.ilike.%${searchTerm}%`);
+			}
 		}
 
 		const { data: productData, error, count } = await query;
@@ -89,7 +118,21 @@
 		}
 
 		if (productData.length > 0) {
-			products = [...products, ...productData];
+			// If languageId is not English, override part_name with the localized version
+			const mappedProducts = productData.map((p) => {
+				if (languageId && p.product_translations?.length) {
+					// Use the first (or only) translation’s part_name
+					return {
+						...p,
+						part_name: p.product_translations[0].part_name
+					};
+				} else {
+					// Fallback to the normal product record
+					return p;
+				}
+			});
+
+			products = [...products, ...mappedProducts];
 			page++;
 		} else {
 			allLoaded = true;
