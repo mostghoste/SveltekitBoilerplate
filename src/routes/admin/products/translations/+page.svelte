@@ -132,13 +132,17 @@
 <nav class="my-4 flex gap-2 items-center">
 	{#if page > 1}
 		<a href="?page={page - 1}" class="btn btn-sm">Previous</a>
-	{/if}
-	{#if page < totalPages}
-		<a href="?page={page + 1}" class="btn btn-sm">Next</a>
+	{:else}
+		<button disabled class="btn btn-sm">Previous</button>
 	{/if}
 	<span class="ml-4">
 		Page {page} of {totalPages}
 	</span>
+	{#if page < totalPages}
+		<a href="?page={page + 1}" class="btn btn-sm">Next</a>
+	{:else}
+		<button disabled class="btn btn-sm">Next</button>
+	{/if}
 </nav>
 
 <table class="table w-full">
@@ -192,11 +196,15 @@
 <nav class="my-4 flex gap-2 items-center">
 	{#if page > 1}
 		<a href="?page={page - 1}" class="btn btn-sm">Previous</a>
-	{/if}
-	{#if page < totalPages}
-		<a href="?page={page + 1}" class="btn btn-sm">Next</a>
+	{:else}
+		<button disabled class="btn btn-sm">Previous</button>
 	{/if}
 	<span class="ml-4">
 		Page {page} of {totalPages}
 	</span>
+	{#if page < totalPages}
+		<a href="?page={page + 1}" class="btn btn-sm">Next</a>
+	{:else}
+		<button disabled class="btn btn-sm">Next</button>
+	{/if}
 </nav>
