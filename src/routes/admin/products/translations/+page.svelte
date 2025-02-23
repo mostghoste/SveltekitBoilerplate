@@ -5,7 +5,9 @@
 	export let data;
 	$: ({ supabase } = data);
 
-	let { products, languages, productTranslations } = data;
+	// Use a reactive statement so these update when the load data changes:
+	$: ({ products, languages, productTranslations, page, totalPages } = data);
+
 	let productStatuses = {}; // Object to track statuses
 
 	async function updateTranslation(productId, languageId, newName) {
@@ -125,6 +127,20 @@
 </script>
 
 <h1 class="font-bold">{m.translations()}</h1>
+
+<!-- Pagination Controls (Top) -->
+<nav class="my-4 flex gap-2 items-center">
+	{#if page > 1}
+		<a href="?page={page - 1}" class="btn btn-sm">Previous</a>
+	{/if}
+	{#if page < totalPages}
+		<a href="?page={page + 1}" class="btn btn-sm">Next</a>
+	{/if}
+	<span class="ml-4">
+		Page {page} of {totalPages}
+	</span>
+</nav>
+
 <table class="table w-full">
 	<thead>
 		<tr>
@@ -171,3 +187,16 @@
 		{/if}
 	</tbody>
 </table>
+
+<!-- Pagination Controls (Bottom) -->
+<nav class="my-4 flex gap-2 items-center">
+	{#if page > 1}
+		<a href="?page={page - 1}" class="btn btn-sm">Previous</a>
+	{/if}
+	{#if page < totalPages}
+		<a href="?page={page + 1}" class="btn btn-sm">Next</a>
+	{/if}
+	<span class="ml-4">
+		Page {page} of {totalPages}
+	</span>
+</nav>
