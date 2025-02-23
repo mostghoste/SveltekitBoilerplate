@@ -59,88 +59,151 @@
 		if (loading || allLoaded) return;
 		loading = true;
 
-		// Build a base query
-		let query = supabase
-			.from('products')
-			// If we have a languageId that isn't English, join product_translations
-			.select(
-				languageId
-					? `
-          id,
-          image,
-          part_code,
-          category_id,
-          product_translations!inner(language_id, part_name),
-          prices(price),
-          categories(category_name)
-        `
-					: `
-          id,
-          image,
-          part_code,
-          part_name,
-          category_id,
-          prices(price),
-          categories(category_name)
+		try {
+			// Start building the base query
+			let query = supabase
+				.from('products')
+				.select(
+					`
+        id,
+        image,
+        part_code,
+        category_id,
+        ${languageId ? 'product_translations!inner(language_id, part_name),' : 'part_name,'}
+        prices(price),
+        categories(category_name)
         `,
-				{ count: 'exact' }
-			)
-			.eq('prices.customer_group_id', customerGroupId)
-			.range((page - 1) * limit, page * limit - 1);
+					{ count: 'exact' }
+				)
+				.eq('prices.customer_group_id', customerGroupId)
+				.range((page - 1) * limit, page * limit - 1);
 
-		if (languageId) {
-			// Filter product_translations by the user’s language
-			query = query.eq('product_translations.language_id', languageId);
-		}
-
-		if (selectedCategoryId) {
-			query = query.eq('category_id', selectedCategoryId);
-		}
-
-		if (searchTerm.length >= 2) {
+			// Add language filter if using translations
 			if (languageId) {
-				// If using translations, search in product_translations.part_name and part_code
-				query = query.or(
-					`product_translations.part_name.ilike.%${searchTerm}%,part_code.ilike.%${searchTerm}%`
-				);
-			} else {
-				// Otherwise, search in the default products.part_name and part_code
-				query = query.or(`part_name.ilike.%${searchTerm}%,part_code.ilike.%${searchTerm}%`);
+				query = query.eq('product_translations.language_id', languageId);
 			}
-		}
 
-		const { data: productData, error, count } = await query;
+			// Add category filter if selected
+			if (selectedCategoryId) {
+				query = query.eq('category_id', selectedCategoryId);
+			}
 
-		if (error) {
-			console.error('Error searching products:', error);
-			loading = false;
-			return;
-		}
+			// Handle search
+			if (searchTerm.length >= 2) {
+				if (languageId) {
+					// When using translations, we need to search in both product_translations.part_name
+					// and products.part_code using two separate queries and union them
+					const translatedQuery = supabase
+						.from('products')
+						.select(
+							`
+            id,
+            image,
+            part_code,
+            category_id,
+            product_translations!inner(language_id, part_name),
+            prices(price),
+            categories(category_name)
+            `,
+							{ count: 'exact' }
+						)
+						.eq('prices.customer_group_id', customerGroupId)
+						.eq('product_translations.language_id', languageId)
+						.ilike('product_translations.part_name', `%${searchTerm}%`);
 
-		if (productData.length > 0) {
-			// If languageId is not English, override part_name with the localized version
-			const mappedProducts = productData.map((p) => {
-				if (languageId && p.product_translations?.length) {
-					// Use the first (or only) translation’s part_name
-					return {
-						...p,
-						part_name: p.product_translations[0].part_name
-					};
+					const partCodeQuery = supabase
+						.from('products')
+						.select(
+							`
+            id,
+            image,
+            part_code,
+            category_id,
+            product_translations!inner(language_id, part_name),
+            prices(price),
+            categories(category_name)
+            `,
+							{ count: 'exact' }
+						)
+						.eq('prices.customer_group_id', customerGroupId)
+						.eq('product_translations.language_id', languageId)
+						.ilike('part_code', `%${searchTerm}%`);
+
+					if (selectedCategoryId) {
+						translatedQuery.eq('category_id', selectedCategoryId);
+						partCodeQuery.eq('category_id', selectedCategoryId);
+					}
+
+					// Execute both queries
+					const [translatedResults, partCodeResults] = await Promise.all([
+						translatedQuery,
+						partCodeQuery
+					]);
+
+					// Combine and deduplicate results
+					const combinedData = [...(translatedResults.data || []), ...(partCodeResults.data || [])];
+					const uniqueData = Array.from(
+						new Map(combinedData.map((item) => [item.id, item])).values()
+					);
+
+					// Handle the combined results
+					if (uniqueData.length > 0) {
+						const mappedProducts = uniqueData.map((p) => ({
+							...p,
+							part_name: p.product_translations[0].part_name
+						}));
+						products = [...products, ...mappedProducts];
+						page++;
+					} else {
+						allLoaded = true;
+					}
+
+					totalCount = Math.max(translatedResults.count || 0, partCodeResults.count || 0);
 				} else {
-					// Fallback to the normal product record
-					return p;
+					// For English, use the original simple search
+					query = query.or(`part_name.ilike.%${searchTerm}%,part_code.ilike.%${searchTerm}%`);
+
+					const { data: productData, count } = await query;
+
+					if (productData?.length > 0) {
+						products = [...products, ...productData];
+						page++;
+					} else {
+						allLoaded = true;
+					}
+
+					totalCount = count;
 				}
-			});
+			} else {
+				// No search term, execute the base query
+				const { data: productData, count } = await query;
 
-			products = [...products, ...mappedProducts];
-			page++;
-		} else {
-			allLoaded = true;
+				if (productData?.length > 0) {
+					const mappedProducts = productData.map((p) => {
+						if (languageId && p.product_translations?.length) {
+							return {
+								...p,
+								part_name: p.product_translations[0].part_name
+							};
+						}
+						return p;
+					});
+
+					products = [...products, ...mappedProducts];
+					page++;
+				} else {
+					allLoaded = true;
+				}
+
+				totalCount = count;
+			}
+
+			displayCount = products.length;
+		} catch (error) {
+			console.error('Error searching products:', error);
+		} finally {
+			loading = false;
 		}
-
-		totalCount = count;
-		displayCount = products.length;
-		loading = false;
 	}, 300);
 
 	onMount(() => {
