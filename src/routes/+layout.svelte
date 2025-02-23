@@ -10,6 +10,10 @@
 	import AgrobondLogo from '$lib/assets/images/logo.png';
 	import CartPreviewSmall from '$lib/components/CartPreviewSmall.svelte';
 	import { cart } from '$lib/stores/cart';
+	import { dev } from '$app/environment';
+	import { inject } from '@vercel/analytics';
+
+	inject({ mode: dev ? 'development' : 'production' });
 
 	let CartProducts = [];
 	let isPing = false;
