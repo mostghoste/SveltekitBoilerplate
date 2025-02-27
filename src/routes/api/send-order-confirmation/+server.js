@@ -1,48 +1,47 @@
+// src/routes/api/order/+server.js (for example)
 import { json } from '@sveltejs/kit';
 import { Resend } from 'resend';
-import { RESEND_API_KEY, EMAIL_SENDER_ADDRESS, EMAIL_SENDER_NAME, EMAIL_SALES_RECIPIENT } from '$env/static/private';
+import {
+  RESEND_API_KEY,
+  EMAIL_SENDER_ADDRESS,
+  EMAIL_SENDER_NAME,
+  EMAIL_SALES_RECIPIENT
+} from '$env/static/private';
 
 const translations = {
   en: {
     email: {
       // For Customer Email
-      intro: "Thank you for your order!",
+      greeting: "Dear Partner,<br/><br/>Thank you for your order!<br/>Our sales team will contact you shortly.",
       order_details: "Order Details",
-      total: "Total Amount",
-      customer_subject: "Order Confirmation",
-      footer: "Our sales team will contact you shortly.",
-
-      // *If* you ever needed an English version for the sales team, you could add them:
-      sales_subject: "New Order Received",
       table_part_name: "Part Name",
       table_part_code: "Part Code",
       table_quantity: "Quantity",
-      table_price_each: "Price Each",
-      sales_intro: "New order received!",
-      customer_info_title: "Customer Contact Information:",
-      name_label: "Name",
-      company_label: "Company",
-      email_label: "Email",
-      phone_label: "Phone Number",
-      group_label: "Customer Group",
-      order_time_label: "Order Time"
+      table_price_each: "Unit price ex. VAT",
+      table_amount_ex_vat: "Amount ex. VAT",
+      table_total_ex_vat: "Total amount ex. VAT",
+      if_questions: "If you have any questions, please contact your sales manager.",
+      signature: "Sincerely,<br/>AGROBOND team",
+      customer_subject: "Order Confirmation"
     }
   },
   lt: {
     email: {
       // For Customer Email
-      intro: "Jūsų užsakymas sėkmingai patvirtintas!",
-      order_details: "Užsakymo krepšelis:",
-      total: "Bendra Suma",
-      customer_subject: "Užsakymo Patvirtinimas",
-      footer: "Agrobond pardavimų komanda netrukus su jumis susisieks.",
-
-      // For Sales Email (always Lithuanian)
-      sales_subject: "Naujas užsakymas",
+      greeting: "Laba diena,<br/><br/>Jūsų užsakymas gautas!<br/>Susisieksime su jumis artimiausiu metu.",
+      order_details: "Užsakytos prekės",
       table_part_name: "Prekės pavadinimas",
       table_part_code: "Prekės kodas",
       table_quantity: "Kiekis",
-      table_price_each: "Kaina vnt.",
+      table_price_each: "Vieneto kaina be PVM",
+      table_amount_ex_vat: "Suma be PVM",
+      table_total_ex_vat: "Bendra suma be PVM",
+      if_questions: "Jei turite klausimų, prašome kreiptis į jūsų aptarnaujantį pardavimų vadybininką.",
+      signature: "Pagarbiai,<br/>AGROBOND komanda",
+      customer_subject: "Užsakymo Patvirtinimas",
+
+      // For Sales Email (always Lithuanian)
+      sales_subject: "Naujas užsakymas",
       sales_intro: "Naujas užsakymas gautas!",
       customer_info_title: "Kliento kontaktinė informacija:",
       name_label: "Vardas",
@@ -53,29 +52,32 @@ const translations = {
       order_time_label: "Užsakymo laikas"
     }
   },
-  uk: {
+  // NOTE: The screenshot text is actually Russian, 
+  // but if you still want to call it "uk" in code, you can keep it that way:
+  ru: {
     email: {
-      // For Customer Email
-      intro: "Дякуємо за ваше замовлення!",
-      order_details: "Деталі замовлення",
-      total: "Загальна сума",
-      customer_subject: "Підтвердження замовлення",
-      footer: "Наша команда з продажу скоро зв'яжеться з вами.",
+      greeting: "Добрый день,<br/><br/>Спасибо за заказ!<br/>С вами свяжемся в ближайшее время.",
+      order_details: "Заказанный товар",
+      table_part_name: "Наименование товара",
+      table_part_code: "Код товара",
+      table_quantity: "Количество",
+      table_price_each: "Цена за единицу без НДС",
+      table_amount_ex_vat: "Сумма без НДС",
+      table_total_ex_vat: "Общая сумма без НДС",
+      if_questions: "Пожалуйста, обращайтесь к вашему менеджеру по продажам, если у вас есть вопросы.",
+      signature: "С уважением,<br/>Команда AGROBOND",
+      customer_subject: "Підтвердження замовлення (RU)", // or whatever subject you prefer
 
-      // (If you need them in Ukrainian, add them below)
-      sales_subject: "Новий отриманий заказ",
-      table_part_name: "Назва товару",
-      table_part_code: "Код товару",
-      table_quantity: "Кількість",
-      table_price_each: "Ціна за шт.",
-      sales_intro: "Новий заказ отримано!",
-      customer_info_title: "Контактна інформація клієнта:",
-      name_label: "Ім'я",
-      company_label: "Компанія",
-      email_label: "Ел. пошта",
-      phone_label: "Номер телефону",
-      group_label: "Група клієнтів",
-      order_time_label: "Час замовлення"
+      // If you also want a "sales" version in Russian, add keys here.
+      sales_subject: "Новый заказ",
+      sales_intro: "Новый заказ получен!",
+      customer_info_title: "Контактная информация клиента:",
+      name_label: "Имя",
+      company_label: "Компания",
+      email_label: "Эл. почта",
+      phone_label: "Номер телефона",
+      group_label: "Группа клиента",
+      order_time_label: "Время заказа"
     }
   }
 };
@@ -86,10 +88,10 @@ export async function POST({ request, locals }) {
   try {
     const { email, cart, language } = await request.json();
 
-    // Customer translation based on language or fallback to English
-    const t = translations[language] || translations.en;
-    // Sales translation is ALWAYS Lithuanian
-    const tSales = translations.lt;
+    // 1) Pick the correct translations or default to English
+    const t = translations[language]?.email || translations.en.email;
+    // 2) Sales translation is ALWAYS Lithuanian
+    const tSales = translations.lt.email;
 
     if (!email || !Array.isArray(cart) || cart.length === 0) {
       return json({ message: 'Invalid request payload' }, { status: 400 });
@@ -97,7 +99,7 @@ export async function POST({ request, locals }) {
 
     const supabase = locals.supabase;
 
-    // 1) Fetch user profile
+    // 3) Fetch user profile
     const { data: userProfile, error: profileError } = await supabase
       .from('profiles')
       .select('customer_group_id, first_name, last_name, company, phone_number')
@@ -108,9 +110,15 @@ export async function POST({ request, locals }) {
       return json({ message: 'User not found' }, { status: 404 });
     }
 
-    const { customer_group_id: customerGroupId, first_name, last_name, company, phone_number } = userProfile;
+    const {
+      customer_group_id: customerGroupId,
+      first_name,
+      last_name,
+      company,
+      phone_number
+    } = userProfile;
 
-    // 2) Fetch customer group
+    // 4) Fetch customer group
     const { data: customerGroup, error: customerGroupError } = await supabase
       .from('customer_groups')
       .select('group_name')
@@ -123,8 +131,8 @@ export async function POST({ request, locals }) {
 
     const customerGroupName = customerGroup.group_name;
 
-    // 3) Fetch product prices and validate them
-    const productIds = cart.map(item => item.id);
+    // 5) Fetch product prices
+    const productIds = cart.map((item) => item.id);
     const { data: productData, error: productError } = await supabase
       .from('products')
       .select('id, part_name, part_code, prices!inner(price, customer_group_id)')
@@ -135,19 +143,21 @@ export async function POST({ request, locals }) {
       return json({ message: 'Error verifying product prices' }, { status: 500 });
     }
 
-    // 4) Validate cart prices and calculate total
+    // 6) Validate and calculate
     let totalAmount = 0;
-    const verifiedCart = cart.map(item => {
-      const product = productData.find(p => p.id === item.id);
+    const verifiedCart = cart.map((item) => {
+      const product = productData.find((p) => p.id === item.id);
       if (!product) {
         throw new Error(`Product ID ${item.id} not found`);
       }
 
       const priceRecord = product.prices.find(
-        p => p.customer_group_id === customerGroupId
+        (p) => p.customer_group_id === customerGroupId
       );
       if (!priceRecord) {
-        throw new Error(`Price not found for product ID ${item.id} and group ID ${customerGroupId}`);
+        throw new Error(
+          `Price not found for product ID ${item.id} and group ID ${customerGroupId}`
+        );
       }
 
       const totalPrice = item.quantity * priceRecord.price;
@@ -161,30 +171,30 @@ export async function POST({ request, locals }) {
       };
     });
 
-    totalAmount = totalAmount.toFixed(2); // Format total amount
+    totalAmount = totalAmount.toFixed(2);
 
-    // 5) Date/time (UTC)
+    // 7) Date/time (UTC)
     const orderTime = new Date().toLocaleString('en-US', {
       timeZone: 'UTC',
       timeZoneName: 'short'
     });
 
-    // 6) Build the table for the Customer Email (localized)
+    // 8) Build the table for the Customer Email
     const orderDetailsTableCustomer = `
       <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">
         <thead>
           <tr>
-            <th>${t.email.table_part_name || 'Part Name'}</th>
-            <th>${t.email.table_part_code || 'Part Code'}</th>
-            <th>${t.email.table_quantity || 'Quantity'}</th>
-            <th>${t.email.table_price_each || 'Price Each'}</th>
-            <th>${t.email.total}</th>
+            <th>${t.table_part_name}</th>
+            <th>${t.table_part_code}</th>
+            <th>${t.table_quantity}</th>
+            <th>${t.table_price_each}</th>
+            <th>${t.table_amount_ex_vat}</th>
           </tr>
         </thead>
         <tbody>
           ${verifiedCart
             .map(
-              item => `
+              (item) => `
             <tr>
               <td>${item.part_name}</td>
               <td>${item.part_code}</td>
@@ -196,57 +206,28 @@ export async function POST({ request, locals }) {
             )
             .join('')}
           <tr>
-            <td colspan="4" align="right"><strong>${t.email.total}:</strong></td>
+            <td colspan="4" align="right"><strong>${t.table_total_ex_vat}:</strong></td>
             <td><strong>${totalAmount}€</strong></td>
           </tr>
         </tbody>
       </table>`;
 
-    // 7) Build the table for the Sales Email (always Lithuanian)
-    const orderDetailsTableSales = `
-      <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">
-        <thead>
-          <tr>
-            <th>${tSales.email.table_part_name}</th>
-            <th>${tSales.email.table_part_code}</th>
-            <th>${tSales.email.table_quantity}</th>
-            <th>${tSales.email.table_price_each}</th>
-            <th>${tSales.email.total}</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${verifiedCart
-            .map(
-              item => `
-            <tr>
-              <td>${item.part_name}</td>
-              <td>${item.part_code}</td>
-              <td>${item.quantity}</td>
-              <td>${item.verifiedPrice.toFixed(2)}€</td>
-              <td>${item.totalPrice.toFixed(2)}€</td>
-            </tr>
-          `
-            )
-            .join('')}
-          <tr>
-            <td colspan="4" align="right"><strong>${tSales.email.total}:</strong></td>
-            <td><strong>${totalAmount}€</strong></td>
-          </tr>
-        </tbody>
-      </table>`;
+    // 9) Build the Customer Email HTML
+    const customerEmailHTML = `
+      ${t.greeting}<br/><br/>
+      <strong>${t.order_details}:</strong><br/>
+      ${orderDetailsTableCustomer}
+      <br/><br/>
+      ${t.if_questions}<br/><br/>
+      ${t.signature}
+    `;
 
-    // 8) Send the Customer Email (localized)
+    // 10) Send the Customer Email
     const customerEmailResponse = await resend.emails.send({
       from: `${EMAIL_SENDER_NAME} <${EMAIL_SENDER_ADDRESS}>`,
       to: [email],
-      subject: t.email.customer_subject,
-      html: `
-        <strong>${t.email.intro}</strong><br/><br/>
-        <strong>${t.email.order_details}:</strong><br/>
-        ${orderDetailsTableCustomer}
-        <br/><br/>
-        <strong>${t.email.footer}</strong>
-      `
+      subject: t.customer_subject,
+      html: customerEmailHTML
     });
 
     if (customerEmailResponse?.error) {
@@ -254,29 +235,65 @@ export async function POST({ request, locals }) {
       return json({ message: 'Failed to send email to customer' }, { status: 500 });
     }
 
-    // 9) Prepare the Sales Email (always Lithuanian)
+    // 11) Build the table for the Sales Email (always Lithuanian)
+    const orderDetailsTableSales = `
+      <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">
+        <thead>
+          <tr>
+            <th>${tSales.table_part_name}</th>
+            <th>${tSales.table_part_code}</th>
+            <th>${tSales.table_quantity}</th>
+            <th>${tSales.table_price_each}</th>
+            <th>${tSales.table_amount_ex_vat}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${verifiedCart
+            .map(
+              (item) => `
+            <tr>
+              <td>${item.part_name}</td>
+              <td>${item.part_code}</td>
+              <td>${item.quantity}</td>
+              <td>${item.verifiedPrice.toFixed(2)}€</td>
+              <td>${item.totalPrice.toFixed(2)}€</td>
+            </tr>
+          `
+            )
+            .join('')}
+          <tr>
+            <td colspan="4" align="right"><strong>${tSales.table_total_ex_vat}:</strong></td>
+            <td><strong>${totalAmount}€</strong></td>
+          </tr>
+        </tbody>
+      </table>`;
+
+    // 12) Build the Sales Email
     const customerDetailsSales = `
-      <strong>${tSales.email.customer_info_title}</strong><br/>
-      ${tSales.email.name_label} ${first_name || 'N/A'} ${last_name || 'N/A'}<br/>
-      ${tSales.email.company_label} ${company || 'N/A'}<br/>
-      ${tSales.email.email_label} ${email}<br/>
-      ${tSales.email.phone_label} ${phone_number || 'N/A'}<br/>
-      ${tSales.email.group_label} ${customerGroupName}<br/>
-      ${tSales.email.order_time_label} ${orderTime}
+      <strong>${tSales.customer_info_title}</strong><br/>
+      ${tSales.name_label}: ${first_name || 'N/A'} ${last_name || 'N/A'}<br/>
+      ${tSales.company_label}: ${company || 'N/A'}<br/>
+      ${tSales.email_label}: ${email}<br/>
+      ${tSales.phone_label}: ${phone_number || 'N/A'}<br/>
+      ${tSales.group_label}: ${customerGroupName}<br/>
+      ${tSales.order_time_label}: ${orderTime}
     `;
 
+    const salesEmailHTML = `
+      <strong>${tSales.sales_intro}</strong><br/><br/>
+      <strong>${tSales.order_details}:</strong><br/>
+      ${orderDetailsTableSales}
+      <br/><br/>
+      ${customerDetailsSales}
+    `;
+
+    // 13) Send the Sales Email
     const salesEmailResponse = await resend.emails.send({
       from: `${EMAIL_SENDER_NAME} <${EMAIL_SENDER_ADDRESS}>`,
       to: [EMAIL_SALES_RECIPIENT],
       reply_to: email,
-      subject: tSales.email.sales_subject + " (" + email + ")",
-      html: `
-        <strong>${tSales.email.sales_intro}</strong><br/><br/>
-        <strong>${tSales.email.order_details}:</strong><br/>
-        ${orderDetailsTableSales}
-        <br/><br/>
-        ${customerDetailsSales}
-      `
+      subject: tSales.sales_subject + " (" + email + ")",
+      html: salesEmailHTML
     });
 
     if (salesEmailResponse?.error) {
