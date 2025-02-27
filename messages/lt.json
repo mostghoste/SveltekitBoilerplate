@@ -98,6 +98,7 @@
 	"confirm_cart_successful_title": "Jūsų užsakymas buvo patvirtintas!",
 	"confirm_cart_successful_p": "Patvirtinimą išsiuntėme el. paštu {email}. Agrobond atstovas jau netrukus su jumis susisieks.",
 	"confirm_cart_continue": "Tęsti",
+	"cart_sending":"Tvirtinama..",
 	"excel_upload": "Sinchronizuoti su excel",
 	"auth_email_missing": "Prašome patikrinti el. paštą.",
 	"invalid_login_credentials": "Vartotojas su tokiais duomenimis neegzistuoja."

@@ -4,12 +4,14 @@
 	import { derived } from 'svelte/store';
 	import * as m from '$lib/paraglide/messages.js';
 	import { languageTag } from '$lib/paraglide/runtime.js';
+
 	export let user;
 
 	let CartProducts = [];
 	let showModal = false;
 	let orderStatus = null; // 'success' or 'fail'
 	let orderError = '';
+	let isSendingOrder = false; // <-- ADDED
 
 	// Reactive cart updates
 	$: cart.subscribe((value) => {
@@ -29,6 +31,7 @@
 
 	// Confirm order function
 	async function confirmOrder() {
+		isSendingOrder = true; // <-- ADDED
 		try {
 			const email = user.email;
 			let selectedLanguage = languageTag();
@@ -40,6 +43,8 @@
 			orderStatus = 'fail';
 			orderError = error?.message || 'Įvyko klaida.';
 			console.error(error);
+		} finally {
+			isSendingOrder = false; // <-- ADDED
 		}
 	}
 
@@ -161,7 +166,6 @@
 			>
 				X
 			</button>
-			<!-- {#if true} -->
 			{#if orderStatus === 'success'}
 				<!-- Success state -->
 				<div class="flex flex-col justify-center py-16">
@@ -274,8 +278,18 @@
 					<button class="btn btn-secondary" on:click={() => (showModal = false)}>
 						{m.return_to_catalog()}
 					</button>
-					<button class="btn btn-success" disabled={!$isCartValid} on:click={confirmOrder}>
-						{m.confirm()}
+					<button
+						class="btn btn-success"
+						disabled={!$isCartValid || isSendingOrder}
+						on:click={confirmOrder}
+					>
+						{#if isSendingOrder}
+							<!-- Simple spinner (DaisyUI) -->
+							<span class="loading loading-spinner loading-sm"></span>
+							<span class="ml-2">{m.cart_sending()}</span>
+						{:else}
+							{m.confirm()}
+						{/if}
 					</button>
 				</div>
 			{/if}

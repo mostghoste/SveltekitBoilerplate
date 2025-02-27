@@ -24,6 +24,7 @@
 	"order_failed": "Failed to send order confirmation email",
 	"confirm_clear_cart": "Are you sure you want to clear the cart?",
 	"cart_total": "Cart total (ex. VAT):",
+	"cart_sending":"Confirming..",
 	"clear_cart": "Clear Cart",
 	"checkout": "Continue to checkout",
 	"cart_empty": "Your cart is empty!",

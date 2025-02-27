@@ -98,6 +98,7 @@
     "confirm_cart_successful_title": "Ваш заказ подтверждён!",
     "confirm_cart_successful_p": "Письмо с подтверждением отправлено на {email}. Представитель Agrobond свяжется с вами в ближайшее время.",
     "confirm_cart_continue": "Продолжить",
+    "cart_sending":"Подтверждаем...",
     "excel_upload": "Синхронизация с excel",
     "auth_email_missing": "Пожалуйста, проверьте, не отсутствует ли ваш email!",
     "invalid_login_credentials": "Пользователь с такими данными не найден."

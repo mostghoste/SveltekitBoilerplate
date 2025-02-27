@@ -66,7 +66,7 @@ const translations = {
       table_total_ex_vat: "Общая сумма без НДС",
       if_questions: "Пожалуйста, обращайтесь к вашему менеджеру по продажам, если у вас есть вопросы.",
       signature: "С уважением,<br/>Команда AGROBOND",
-      customer_subject: "Підтвердження замовлення (RU)", // or whatever subject you prefer
+      customer_subject: "Підтвердження замовлення", // or whatever subject you prefer
 
       // If you also want a "sales" version in Russian, add keys here.
       sales_subject: "Новый заказ",
