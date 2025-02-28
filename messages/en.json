@@ -12,7 +12,7 @@
 	"all_categories": "All categories",
 	"image": "Image",
 	"part_details": "Name",
-	"price": "Price",
+	"price": "Price (ex. VAT)",
 	"quantity": "Quantity",
 	"quantity_short": "Qty.",
 	"no_products_found": "No products found!",

@@ -37,7 +37,7 @@ const translations = {
       table_amount_ex_vat: "Suma be PVM",
       table_total_ex_vat: "Bendra suma be PVM",
       if_questions: "Jei turite klausimų, prašome kreiptis į jūsų aptarnaujantį pardavimų vadybininką.",
-      signature: "Pagarbiai,<br/>AGROBOND komanda",
+      signature: "Pagarbiai <br/>AGROBOND komanda",
       customer_subject: "Užsakymo Patvirtinimas",
 
       // For Sales Email (always Lithuanian)
@@ -66,7 +66,7 @@ const translations = {
       table_total_ex_vat: "Общая сумма без НДС",
       if_questions: "Пожалуйста, обращайтесь к вашему менеджеру по продажам, если у вас есть вопросы.",
       signature: "С уважением,<br/>Команда AGROBOND",
-      customer_subject: "Підтвердження замовлення", // or whatever subject you prefer
+      customer_subject: "Потверждение заказа",
 
       // If you also want a "sales" version in Russian, add keys here.
       sales_subject: "Новый заказ",

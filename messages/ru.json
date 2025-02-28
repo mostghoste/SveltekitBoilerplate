@@ -12,7 +12,7 @@
     "all_categories": "Все категории",
     "image": "Изображение",
     "part_details": "Название",
-    "price": "Цена",
+    "price": "Цена (без НДС)",
     "quantity": "Количество",
     "quantity_short": "Кол.",
     "no_products_found": "Продукты не найдены!",
