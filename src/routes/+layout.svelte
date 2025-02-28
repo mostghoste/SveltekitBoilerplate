@@ -12,6 +12,7 @@
 	import { cart } from '$lib/stores/cart';
 	import { dev } from '$app/environment';
 	import { inject } from '@vercel/analytics';
+	import FaUser from 'svelte-icons/fa/FaUser.svelte';
 
 	inject({ mode: dev ? 'development' : 'production' });
 
@@ -125,7 +126,7 @@
 				<div class="dropdown dropdown-end">
 					<button class="btn btn-ghost btn-circle avatar placeholder">
 						<div class="w-10 rounded-full bg-neutral text-neutral-content">
-							<span class="text-xl">{user.email.slice(0, 2)}</span>
+							<span class="w-5"> <FaUser></FaUser></span>
 						</div>
 					</button>
 					<ul
