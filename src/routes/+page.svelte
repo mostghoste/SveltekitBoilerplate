@@ -1,7 +1,6 @@
 <script>
 	import AgrobondLogo from '$lib/assets/images/logo.png';
 	import { page } from '$app/stores';
-	import { derived } from 'svelte/store';
 	import { onMount } from 'svelte';
 	import { createClient } from '@supabase/supabase-js';
 	import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
@@ -22,6 +21,7 @@
 			send_reset_email: 'Send reset email',
 			reset_confirmation: 'A recovery email has been sent to your inbox.',
 			back_to_login: 'Back to login',
+			loading: 'Sending...',
 			errors: {
 				INVALID_CREDENTIALS: 'Login failed. Invalid login credentials.',
 				EMAIL_REQUIRED: 'Login failed. Email is required.',
@@ -38,6 +38,7 @@
 			send_reset_email: 'Отправить письмо для восстановления',
 			reset_confirmation: 'Письмо для восстановления отправлено на ваш почтовый ящик.',
 			back_to_login: 'Назад к входу',
+			loading: 'Отправка...',
 			errors: {
 				INVALID_CREDENTIALS: 'Вход не выполнен. Неверные учетные данные.',
 				EMAIL_REQUIRED: 'Вход не выполнен. Требуется указание email.',
@@ -55,6 +56,7 @@
 			send_reset_email: 'Siųsti atkūrimo laišką',
 			reset_confirmation: 'Atkūrimo laiškas išsiųstas į jūsų pašto dėžutę.',
 			back_to_login: 'Atgal prie prisijungimo',
+			loading: 'Siunčiama...',
 			errors: {
 				INVALID_CREDENTIALS: 'Prisijungimas nepavyko. Neteisingi prisijungimo duomenys.',
 				EMAIL_REQUIRED: 'Prisijungimas nepavyko. Įveskite el. paštą.',
@@ -105,10 +107,14 @@
 	let resetConfirmation = false;
 	let resetError = '';
 
+	// Loading state for sending the reset email
+	let isSending = false;
+
 	// Handle reset form submission: call Supabase to send a password reset email
 	async function handleResetSubmit(event) {
 		event.preventDefault();
 		resetError = '';
+		isSending = true; // Start loading
 		try {
 			const { data, error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
 				redirectTo: '/update-password'
@@ -120,6 +126,8 @@
 			}
 		} catch (err) {
 			resetError = err.message;
+		} finally {
+			isSending = false; // End loading
 		}
 	}
 
@@ -174,9 +182,19 @@
 				placeholder={t.email_placeholder}
 				bind:value={resetEmail}
 			/>
-			<button type="submit" class="btn btn-success" disabled={!resetValid}
-				>{t.send_reset_email}</button
+			<button
+				type="submit"
+				class="btn btn-success flex items-center gap-2"
+				disabled={!resetValid || isSending}
 			>
+				{#if isSending}
+					<!-- Show a loading indicator or text -->
+					<span class="loader"></span>
+					{t.loading}
+				{:else}
+					{t.send_reset_email}
+				{/if}
+			</button>
 			{#if resetError}
 				<p class="text-red-600">{resetError}</p>
 			{/if}
@@ -234,3 +252,23 @@
 		</div>
 	{/if}
 </main>
+
+<style>
+	.loader {
+		width: 1rem;
+		height: 1rem;
+		border: 2px solid transparent;
+		border-top-color: white;
+		border-radius: 50%;
+		animation: spin 0.8s linear infinite;
+	}
+
+	@keyframes spin {
+		0% {
+			transform: rotate(0deg);
+		}
+		100% {
+			transform: rotate(360deg);
+		}
+	}
+</style>
