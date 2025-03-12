@@ -101,5 +101,7 @@
 	"confirm_cart_continue": "Continue",
 	"excel_upload": "Sync with excel",
 	"auth_email_missing": "Please check if your email is missing!",
-	"invalid_login_credentials": "A user with these credentials does not exist."
+	"invalid_login_credentials": "A user with these credentials does not exist.",
+	"delete_users": "Delete users",
+	"confirm_delete_users": "Are you sure you want to delete the selected users? This action cannot be undone."
 }

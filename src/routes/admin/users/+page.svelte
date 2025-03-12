@@ -1,5 +1,4 @@
 <script>
-	import { i18n } from '$lib/i18n';
 	import * as m from '$lib/paraglide/messages.js';
 
 	export let data;
@@ -58,6 +57,17 @@
 	// Function to handle the form submission
 	function handleSubmit(event) {
 		if (!confirmDisabled) {
+			event.target.submit();
+		}
+	}
+
+	// Confirm deletion before submitting the form
+	function handleDeleteSubmit(event) {
+		if (
+			confirm(
+				'Are you sure you want to delete the selected users? This action cannot be undone.\nAr tikrai norite ištrinti šiuos vartotojus? Šis veiksmas negali būti atstatytas.'
+			)
+		) {
 			event.target.submit();
 		}
 	}
@@ -138,6 +148,8 @@
 <!-- Management actions -->
 <section class="mt-4">
 	<h2 class="font-bold">{m.management_actions()}</h2>
+
+	<!-- Change customer group -->
 	<div class="flex gap-2 items-center">
 		<label for="customer_group_select">{m.change_customer_group()}</label>
 		<select
@@ -160,6 +172,21 @@
 			<input type="hidden" name="user_ids" value={selectedUsers.join(',')} />
 			<button class="btn btn-success" type="submit" disabled={confirmDisabled}>{m.confirm()}</button
 			>
+		</form>
+	</div>
+
+	<!-- Delete users action -->
+	<div class="mt-4">
+		<form
+			method="post"
+			action="?/delete"
+			on:submit|preventDefault={handleDeleteSubmit}
+			class="flex items-center gap-2"
+		>
+			<input type="hidden" name="user_ids" value={selectedUsers.join(',')} />
+			<button class="btn btn-warning" type="submit" disabled={selectedUsers.length === 0}>
+				{m.delete_users() || 'Delete Selected Users'}
+			</button>
 		</form>
 	</div>
 </section>

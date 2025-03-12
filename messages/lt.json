@@ -101,5 +101,6 @@
 	"cart_sending":"Tvirtinama..",
 	"excel_upload": "Sinchronizuoti su excel",
 	"auth_email_missing": "Prašome patikrinti el. paštą.",
-	"invalid_login_credentials": "Vartotojas su tokiais duomenimis neegzistuoja."
+	"invalid_login_credentials": "Vartotojas su tokiais duomenimis neegzistuoja.",
+	"delete_users": "Ištrinti vartotojus"
 }

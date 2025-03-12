@@ -122,5 +122,52 @@ export const actions = {
     return {
       success: true,
     };
+  },
+
+  delete: async ({ request, locals }) => {
+    const data = await request.formData();
+    const userIds = data.get('user_ids');
+
+    if (!userIds) {
+      return fail(400, { error: 'User IDs are required' });
+    }
+
+    // Convert comma-separated string into an array
+    const userIdsArray = userIds.split(',');
+
+    // Use the service key client for administrative actions
+    const supabase = createClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
+
+    // Delete related profiles first
+    const { error: profilesError } = await supabase
+      .from('profiles')
+      .delete()
+      .in('id', userIdsArray);
+
+    if (profilesError) {
+      console.error('Error deleting profiles:', profilesError);
+      return fail(500, { error: 'Failed to delete profiles: ' + profilesError.message });
+    }
+
+    // Delete users from the auth table
+    let authError = null;
+    for (const userId of userIdsArray) {
+      const { error } = await supabase.auth.admin.deleteUser(userId);
+      if (error) {
+        console.error(`Error deleting auth user ${userId}:`, error);
+        authError = error;
+      }
+    }
+
+    if (authError) {
+      return fail(500, { error: 'Failed to delete one or more auth users: ' + authError.message });
+    }
+
+    return { success: true };
   }
 };
