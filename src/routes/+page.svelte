@@ -3,6 +3,11 @@
 	import { page } from '$app/stores';
 	import { derived } from 'svelte/store';
 	import { onMount } from 'svelte';
+	import { createClient } from '@supabase/supabase-js';
+	import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+
+	// Create the Supabase client for frontend use
+	const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
 
 	// Inline translations with error messages and reset texts
 	const translations = {
@@ -96,14 +101,26 @@
 	// Reactive validation for reset form: email must be non-empty
 	$: resetValid = resetEmail.trim() !== '';
 
-	// State to trigger confirmation modal (simulate reset email sent)
+	// State to trigger confirmation modal (for a sent reset email)
 	let resetConfirmation = false;
+	let resetError = '';
 
-	// Handle reset form submission (frontend simulation)
-	function handleResetSubmit(event) {
+	// Handle reset form submission: call Supabase to send a password reset email
+	async function handleResetSubmit(event) {
 		event.preventDefault();
-		// Here you would normally send the email to the backend
-		resetConfirmation = true;
+		resetError = '';
+		try {
+			const { data, error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+				redirectTo: '/update-password'
+			});
+			if (error) {
+				resetError = error.message;
+			} else {
+				resetConfirmation = true;
+			}
+		} catch (err) {
+			resetError = err.message;
+		}
 	}
 
 	// Switch back to login mode
@@ -160,6 +177,9 @@
 			<button type="submit" class="btn btn-success" disabled={!resetValid}
 				>{t.send_reset_email}</button
 			>
+			{#if resetError}
+				<p class="text-red-600">{resetError}</p>
+			{/if}
 		</form>
 		<p class="underline cursor-pointer text-sm" on:click={switchToLogin}>
 			{t.back_to_login}
@@ -199,15 +219,17 @@
 		<div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
 			<div class="bg-white p-6 rounded shadow">
 				<p>{t.reset_confirmation}</p>
-				<button
-					class="btn btn-success mt-4"
-					on:click={() => {
-						resetConfirmation = false;
-						switchToLogin();
-					}}
-				>
-					{t.back_to_login}
-				</button>
+				<footer class="flex justify-center">
+					<button
+						class="btn btn-success mt-4"
+						on:click={() => {
+							resetConfirmation = false;
+							switchToLogin();
+						}}
+					>
+						{t.back_to_login}
+					</button>
+				</footer>
 			</div>
 		</div>
 	{/if}
