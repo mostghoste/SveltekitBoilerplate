@@ -28,16 +28,19 @@ export const actions: Actions = {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       console.error(error);
-      if (error.message == "missing email or phone") {
-        return fail(400, { message: 'Login failed. ' + m.auth_email_missing() });
+      let code = '';
+      if (error.message === "missing email or phone") {
+        code = "EMAIL_REQUIRED";
+      } else if (error.message === "Invalid login credentials") {
+        code = "INVALID_CREDENTIALS";
+      } else {
+        code = "UNKNOWN_ERROR";
       }
-      if (error.message == "Invalid login credentials") {
-        return fail(400, { message: 'Login failed. ' + m.invalid_login_credentials() });
-      }
-      return fail(400, { message: 'Login failed. ' + error.message });
+      // Redirect back to root with error code as query parameter
+      throw redirect(303, '/?error=' + encodeURIComponent(code));
     }
 
-    // If successful, redirect to /products
+    // On success, redirect to /products
     throw redirect(303, '/products');
   }
 };
