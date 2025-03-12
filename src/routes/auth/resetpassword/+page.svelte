@@ -2,11 +2,9 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { createClient } from '@supabase/supabase-js';
-	import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+	export let data;
 
-	// Create a Supabase client for client-side operations
-	const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
+	$: ({ supabase } = data);
 
 	// Extract email, token_hash, and type from query parameters
 	let email = '';
@@ -88,6 +86,7 @@
 	async function setPasswordHandler() {
 		errorMessage = '';
 
+		// Basic validations
 		if (!isLengthValid) {
 			errorMessage = t.validation.length;
 			return;
@@ -97,7 +96,7 @@
 			return;
 		}
 
-		// Verify the token (for recovery) via Supabase using token_hash AND email
+		// 1. Verify the token (for 'recovery' or 'invite') using Supabase
 		const { error: verifyError } = await supabase.auth.verifyOtp({
 			email,
 			token: token_hash,
@@ -108,16 +107,23 @@
 			return;
 		}
 
-		// Update the user's password
-		const { error: updateError } = await supabase.auth.updateUser({
-			password
-		});
+		// 2. Update the user's password
+		const { error: updateError } = await supabase.auth.updateUser({ password });
 		if (updateError) {
 			errorMessage = updateError.message;
-		} else {
-			alert(t.passwordSetSuccess);
-			goto('/products');
+			return;
 		}
+
+		// 3. Log in with the new password so the user is fully authenticated
+		const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+		if (signInError) {
+			errorMessage = signInError.message;
+			return;
+		}
+
+		// 4. Redirect to /products
+		alert(t.passwordSetSuccess);
+		goto('/products');
 	}
 </script>
 
@@ -171,6 +177,7 @@
 			required
 		/>
 
+		<!-- Validation checks -->
 		<ul class="list-none pl-0 space-y-1">
 			<li
 				class="flex items-center"
