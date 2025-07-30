@@ -42,64 +42,69 @@ export async function load({ locals, depends }) {
     console.error('Error fetching total product count:', countError);
   }
 
-  let categories = [];
-  let language_id;
+let categories = [];
+  let languageId = null;
 
   if (userLanguageCode === 'en') {
-    // Fetch categories directly if the language is English
-    const { data: categoryData, error: categoriesError } = await supabase
+    // English: just pull the base names
+    const { data: rawCats, error: catErr } = await supabase
       .from('categories')
-      .select('id, category_name');
+      .select('id, parent_id, category_name');
+    if (catErr) console.error('Error fetching categories:', catErr);
 
-    if (categoriesError) {
-      console.error('Error fetching categories:', categoriesError);
-    }
-
-    categories = categoryData || [];
+    categories = (rawCats || []).map(c => ({
+      id: c.id,
+      parent_id: c.parent_id,
+      name: c.category_name
+    }));
   } else {
-    // Fetch the language ID based on the user's language code
-    const { data: language, error: languageError } = await supabase
+    // Non‑English: look up the language ID
+    const { data: lang, error: langErr } = await supabase
       .from('languages')
       .select('id')
       .eq('code', userLanguageCode)
       .single();
 
-    if (languageError || !language) {
-      console.error('Error fetching language:', languageError);
-      return {
-        customerGroupId: userProfile.customer_group_id,
-        categories: [],
-        totalProductCount,
-        error: 'Failed to fetch language data'
-      };
+    if (langErr || !lang) {
+      console.error('Error fetching language:', langErr);
+      // fallback to English names
+      const { data: rawCats, error: catErr } = await supabase
+        .from('categories')
+        .select('id, parent_id, category_name');
+      if (catErr) console.error('Error fetching categories:', catErr);
+
+      categories = (rawCats || []).map(c => ({
+        id: c.id,
+        parent_id: c.parent_id,
+        name: c.category_name
+      }));
+    } else {
+      languageId = lang.id;
+      // Left‐join translations for that language
+      const { data: rawCats, error: catErr } = await supabase
+        .from('categories')
+        .select(`
+          id,
+          parent_id,
+          category_name,
+          category_translations!left(language_id, category_name)
+        `)
+        .eq('category_translations.language_id', languageId);
+      if (catErr) console.error('Error fetching translated categories:', catErr);
+
+      categories = (rawCats || []).map(c => ({
+        id: c.id,
+        parent_id: c.parent_id,
+        // prefer translated name, otherwise base name
+        name: c.category_translations?.[0]?.category_name || c.category_name
+      }));
     }
-
-    const languageId = language.id;
-    language_id = languageId;
-
-    // Fetch categories with translations for the specified language ID
-    const { data: categoryData, error: categoriesError } = await supabase
-      .from('categories')
-      .select(`
-        id,
-        category_translations!inner(language_id, category_name)
-      `)
-      .eq('category_translations.language_id', languageId);
-
-    if (categoriesError) {
-      console.error('Error fetching categories:', categoriesError);
-    }
-
-    categories = categoryData.map(category => ({
-      id: category.id,
-      category_name: category.category_translations[0]?.category_name || category.category_name,
-    })) || [];
   }
 
   return {
     customerGroupId: userProfile.customer_group_id,
     categories,
     totalProductCount: totalProductCount || 0,
-    languageId: language_id
+    languageId
   };
 }
