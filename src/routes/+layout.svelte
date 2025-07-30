@@ -132,7 +132,14 @@
 					<ul
 						class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
 					>
-						<li><button on:click={logout}>{m.logout()}</button></li>
+						<!-- show the user’s email at the top -->
+						<li class="px-4 py-2 cursor-default text-sm">
+							{user.email}
+						</li>
+						<hr class="border-t border-base-200 my-1" />
+						<li>
+							<button on:click={logout}>{m.logout()}</button>
+						</li>
 					</ul>
 				</div>
 			</div>
