@@ -268,11 +268,11 @@
 
 			{#each parents as parent}
 				<li>
-					<details class="collapse collapse-arrow bg-base-100 mb-2">
-						<summary class="collapse-title">
+					<details>
+						<summary>
 							{parent.name}
 						</summary>
-						<ul class="collapse-content p-0">
+						<ul>
 							{#each childrenMap[parent.id] || [] as child}
 								<li>
 									<button
