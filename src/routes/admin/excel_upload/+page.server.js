@@ -232,16 +232,42 @@ export const actions = {
       await getOrCreateLanguage(code);
     }
 
+    // ─── Step 2: set up parent‑category cache ────────────────────────────────
+    const parentCache = {};
+    async function getParentId(altId) {
+      if (parentCache[altId] != null) return parentCache[altId];
+      const { data: p, error } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('id_alt', altId)
+        .single();
+      if (error || !p) {
+        logs.push(`Parent not found for parent_altid="${altId}"`);
+        return null;
+      }
+      parentCache[altId] = p.id;
+      return p.id;
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
+
     // 4) Process each CSV row
     for (const row of rows) {
       try {
         // --- A) Category: store row.category => categories.id_alt
         //                 store row.category_name_en => categories.category_name
-        const altId = row.category?.trim(); // e.g. "10" or "11"
+        const altId     = row.category?.trim();      // sub‑category alt id
+        const parentAlt = row.parent_altid?.trim();  // NEW: the parent’s alt id
         if (!altId) {
-          const msg = `Skipping row with no category code: ${JSON.stringify(row)}`;
-          logs.push(msg);
-          console.warn(msg);
+          logs.push(`Skipping row with no category code: ${JSON.stringify(row)}`);
+          continue;
+        }
+        const parentId =
+          parentAlt && parentAlt.length
+            ? await getParentId(parentAlt)
+            : null;
+        if (parentAlt && !parentId) {
+          logs.push(`Skipping row: unknown parent_altid="${parentAlt}"`);
           continue;
         }
 
@@ -249,12 +275,19 @@ export const actions = {
         let catNameEn = row.category_name_en?.trim() || '';
         if (!catNameEn) catNameEn = `Category ${altId}`; // fallback
 
-        // 1) find or create the category by id_alt
-        const { data: existingCat, error: catErr } = await supabase
+        // 1) find or create the category by id_alt (only filter parent_id if we have one)
+        let catQuery = supabase
           .from('categories')
           .select('id')
-          .eq('id_alt', altId)
-          .single();
+          .eq('id_alt', altId);
+
+        if (parentAlt) {
+          // only apply when parentAlt was provided
+          catQuery = catQuery.eq('parent_id', parentId);
+        }
+
+        const { data: existingCat, error: catErr } = await catQuery.single();
+
 
         let categoryId;
         if (catErr && catErr.code !== 'PGRST116') {
@@ -267,12 +300,19 @@ export const actions = {
         if (!existingCat) {
           // Insert new category
           logs.push(`Creating category with id_alt="${altId}", name="${catNameEn}"`);
+          // Insert new category (attach parent_id only if present)
+          const payload = {
+            id_alt:        altId,
+            category_name: catNameEn
+          };
+
+          if (parentAlt) {
+            payload.parent_id = parentId;
+          }
+
           const { data: newCat, error: newCatErr } = await supabase
             .from('categories')
-            .insert({
-              id_alt: altId,
-              category_name: catNameEn
-            })
+            .insert(payload)
             .select('id')
             .single();
 
@@ -582,6 +622,7 @@ function parseCSV(contents, infoLogs = [], devLogs = []) {
     if (/^part_name_[a-zA-Z]{2}$/.test(header)) return true;
     if (/^price_.+/.test(header)) return true;
     if (header === 'image') return true;
+    if (header === 'parent_altid')        return true;
     if (/^category_name_.+/.test(header)) return true;
     return false;
   };
