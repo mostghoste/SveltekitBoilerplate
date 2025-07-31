@@ -33,11 +33,20 @@
 				map[c.parent_id] = map[c.parent_id] || [];
 				map[c.parent_id].push(c);
 			});
+		// sort subcategories by alt id (fallback to empty string)
+		Object.values(map).forEach((arr) => {
+			arr.sort((a, b) => {
+				const aAlt = (a.id_alt || '').toString();
+				const bAlt = (b.id_alt || '').toString();
+				return aAlt.localeCompare(bAlt, undefined, { numeric: true, sensitivity: 'base' });
+			});
+		});
 		childrenMap = map;
 	} else {
 		parents = [];
 		childrenMap = {};
 	}
+
 	// ─────────────────────────────────────────────────────────────────────
 
 	// when language changes, reload products

@@ -49,13 +49,14 @@ let categories = [];
     // English: just pull the base names
     const { data: rawCats, error: catErr } = await supabase
       .from('categories')
-      .select('id, parent_id, category_name');
+      .select('id, parent_id, category_name, id_alt');
     if (catErr) console.error('Error fetching categories:', catErr);
 
     categories = (rawCats || []).map(c => ({
       id: c.id,
       parent_id: c.parent_id,
-      name: c.category_name
+      name: c.category_name,
+      id_alt: c.id_alt
     }));
   } else {
     // Non‑English: look up the language ID
@@ -70,13 +71,14 @@ let categories = [];
       // fallback to English names
       const { data: rawCats, error: catErr } = await supabase
         .from('categories')
-        .select('id, parent_id, category_name');
+        .select('id, parent_id, category_name, id_alt');
       if (catErr) console.error('Error fetching categories:', catErr);
 
       categories = (rawCats || []).map(c => ({
         id: c.id,
         parent_id: c.parent_id,
-        name: c.category_name
+        name: c.category_name,
+        id_alt: c.id_alt
       }));
     } else {
       languageId = lang.id;
@@ -86,6 +88,7 @@ let categories = [];
         .select(`
           id,
           parent_id,
+          id_alt,
           category_name,
           category_translations!left(language_id, category_name)
         `)
@@ -96,7 +99,8 @@ let categories = [];
         id: c.id,
         parent_id: c.parent_id,
         // prefer translated name, otherwise base name
-        name: c.category_translations?.[0]?.category_name || c.category_name
+        name: c.category_translations?.[0]?.category_name || c.category_name,
+        id_alt: c.id_alt
       }));
     }
   }
