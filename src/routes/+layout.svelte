@@ -13,8 +13,39 @@
 	import { dev } from '$app/environment';
 	import { inject } from '@vercel/analytics';
 	import FaUser from 'svelte-icons/fa/FaUser.svelte';
+	import { afterNavigate } from '$app/navigation';
 
 	inject({ mode: dev ? 'development' : 'production' });
+
+	// Helper to inject gtag.js
+	function loadGtag(measurementId) {
+		if (!measurementId) return;
+		// insert script tag only once
+		if (document.querySelector(`script[src*="gtag/js?id=${measurementId}"]`)) return;
+
+		const script = document.createElement('script');
+		script.async = true;
+		script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
+		document.head.appendChild(script);
+
+		window.dataLayer = window.dataLayer || [];
+		function gtag() {
+			window.dataLayer.push(arguments);
+		}
+		window.gtag = gtag;
+
+		window.gtag('js', new Date());
+		// disable automatic page_view; we'll fire manually
+		window.gtag('config', measurementId, { send_page_view: false });
+	}
+
+	function trackPageView(path) {
+		if (window.gtag) {
+			window.gtag('event', 'page_view', {
+				page_path: path
+			});
+		}
+	}
 
 	let CartProducts = [];
 	let isPing = false;
@@ -40,6 +71,17 @@
 				invalidate('supabase:auth');
 			}
 		});
+
+		if (PUBLIC_GA_MEASUREMENT_ID) {
+			loadGtag(PUBLIC_GA_MEASUREMENT_ID);
+			// initial page view
+			trackPageView(window.location.pathname + window.location.search);
+
+			// subsequent client navigation page views
+			afterNavigate((nav) => {
+				trackPageView(nav.to?.url.pathname + nav.to?.url.search);
+			});
+		}
 
 		return () => data.subscription.unsubscribe();
 	});
