@@ -14,6 +14,7 @@
 	import { inject } from '@vercel/analytics';
 	import FaUser from 'svelte-icons/fa/FaUser.svelte';
 	import { afterNavigate } from '$app/navigation';
+	import { PUBLIC_GA_MEASUREMENT_ID } from '$env/static/public';
 
 	inject({ mode: dev ? 'development' : 'production' });
 
