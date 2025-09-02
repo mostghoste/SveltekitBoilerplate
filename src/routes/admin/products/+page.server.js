@@ -4,59 +4,96 @@ import { v4 as uuidv4 } from 'uuid';
 
 /** @type {import('./$types').PageServerLoad} */
 export const load = async ({ locals, depends }) => {
-  depends("paraglide:lang");
+  depends('paraglide:lang');
   const supabase = locals.supabase;
-  const userLanguageCode = languageTag(); // Get the user's selected language code
+  const userLanguageCode = languageTag(); // e.g. 'en' | 'lt' | 'ru'
 
-  // Fetch categories
+  // 1) Always fetch categories (with parent_id for nesting)
   const { data: categories, error: categoriesError } = await supabase
     .from('categories')
-    .select('id, category_name');
+    .select('id, category_name, parent_id')
+    .order('id', { ascending: true });
 
-  // Fetch the language ID based on the user's language code
-  const { data: language, error: languageError } = await supabase
-    .from('languages')
-    .select('id')
-    .eq('code', userLanguageCode)
-    .single();
-
-  if (languageError || !language) {
-    console.error('Error fetching language:', languageError);
-    return {
-      categories: categories || [],
-      error: 'Failed to fetch language data',
-    };
+  if (categoriesError || !categories) {
+    console.error('Error fetching categories:', categoriesError);
+    return { categoriesOptions: [] };
   }
 
-  const languageId = language.id;
+  // 2) Build an optional translation map — only if we can resolve a language id AND it isn’t 'en'
+  let translationMap = new Map();
+  if (userLanguageCode && userLanguageCode.toLowerCase() !== 'en') {
+    const { data: language, error: languageError } = await supabase
+      .from('languages')
+      .select('id')
+      .eq('code', userLanguageCode)
+      .single();
 
-  // Fetch category translations for the specified language ID
-  const { data: categoryTranslations, error: translationsError } = await supabase
-    .from('category_translations')
-    .select('category_id, category_name')
-    .eq('language_id', languageId);
+    if (!languageError && language?.id) {
+      const { data: categoryTranslations, error: translationsError } = await supabase
+        .from('category_translations')
+        .select('category_id, category_name')
+        .eq('language_id', language.id);
 
-  if (categoriesError || translationsError) {
-    console.error('Error fetching data:', categoriesError, translationsError);
-    return { categories: [], error: 'Failed to fetch categories or translations' };
+      if (!translationsError && categoryTranslations) {
+        translationMap = new Map(categoryTranslations.map((t) => [t.category_id, t.category_name]));
+      } else if (translationsError) {
+        console.warn('No category translations for language:', userLanguageCode, translationsError?.message);
+      }
+    } else if (languageError) {
+      console.warn('Language not found for code:', userLanguageCode, languageError?.message);
+    }
   }
+  // If 'en' or language not found, we’ll just use categories.category_name
 
-  // Map translations to categories
-  const translatedCategories = categories.map((category) => {
-    const translation = categoryTranslations.find(
-      (t) => t.category_id === category.id
-    );
-    return {
-      ...category,
-      category_name: translation ? translation.category_name : category.category_name,
+  // 3) Build nodes, tree, and flatten with breadcrumb labels
+  const byId = new Map();
+  const children = new Map(); // parent_id -> child nodes
+  const roots = [];
+
+  categories.forEach((c) => {
+    const node = {
+      id: c.id,
+      parent_id: c.parent_id,
+      name: translationMap.get(c.id) || c.category_name
     };
+    byId.set(c.id, node);
   });
 
-  return {
-    categories: translatedCategories,
-  };
-};
+  byId.forEach((node) => {
+    if (node.parent_id == null) {
+      roots.push(node);
+    } else {
+      if (!children.has(node.parent_id)) children.set(node.parent_id, []);
+      children.get(node.parent_id).push(node);
+    }
+  });
 
+  const sortKids = (arr) =>
+    arr?.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+
+  sortKids(roots);
+  children.forEach(sortKids);
+
+  /** @type {{id:number, label:string, depth:number, isLeaf:boolean}[]} */
+  const categoriesOptions = [];
+  function walk(node, trail) {
+    const currentTrail = [...trail, node.name];
+    const kids = children.get(node.id) || [];
+    const isLeaf = kids.length === 0;
+
+    categoriesOptions.push({
+      id: node.id,
+      label: currentTrail.join(' › '),
+      depth: currentTrail.length - 1,
+      isLeaf
+    });
+
+    kids.forEach((k) => walk(k, currentTrail));
+  }
+  roots.forEach((r) => walk(r, []));
+
+  return { categoriesOptions };
+};
 
 /** @type {import('./$types').Actions} */
 export const actions = {
@@ -65,8 +102,8 @@ export const actions = {
     const formData = await request.formData();
     const partName = formData.get('part_name');
     const partCode = formData.get('part_code');
-    const categoryId = formData.get('category_id'); // Use category ID
-    const price = parseFloat(formData.get('price')) || 0.0; // Optional, default to 0.00
+    const categoryId = formData.get('category_id');
+    const price = parseFloat(formData.get('price')) || 0.0;
     const imageFile = formData.get('image');
 
     if (!partName || !partCode || !categoryId) {
@@ -75,16 +112,13 @@ export const actions = {
 
     let imageName = null;
     if (imageFile && imageFile.size > 0) {
-      // Sanitize the image name and create a unique name
       const ext = imageFile.name.split('.').pop();
       imageName = `${uuidv4()}.${ext}`;
-
-      // Upload the image to the Supabase storage bucket
       const { error: uploadError } = await supabase.storage
         .from('product_images')
         .upload(imageName, imageFile.stream(), {
-          contentType: imageFile.type, // Set the content type
-          duplex: 'half' // Explicitly set duplex option
+          contentType: imageFile.type,
+          duplex: 'half'
         });
 
       if (uploadError) {
@@ -93,7 +127,6 @@ export const actions = {
       }
     }
 
-    // Insert the new product into the database
     const { error: insertError } = await supabase
       .from('products')
       .insert({ part_name: partName, part_code: partCode, category_id: categoryId, image: imageName, price });
@@ -103,30 +136,25 @@ export const actions = {
       return fail(500, { error: 'Failed to create product' });
     }
 
-    return {
-      success: true,
-    };
+    return { success: true };
   },
+
   updateImage: async ({ request, locals }) => {
     const supabase = locals.supabase;
     const formData = await request.formData();
     const productId = formData.get('product_id');
     const imageFile = formData.get('image');
 
-    if (!productId || !imageFile) {
-      return fail(400, { error: 'Product ID and image are required' });
-    }
+    if (!productId || !imageFile) return fail(400, { error: 'Product ID and image are required' });
 
-    // Sanitize the image name and create a unique name
     const ext = imageFile.name.split('.').pop();
     const imageName = `${uuidv4()}.${ext}`;
 
-    // Upload the image to the Supabase storage bucket
     const { error: uploadError } = await supabase.storage
       .from('product_images')
       .upload(imageName, imageFile.stream(), {
         contentType: imageFile.type,
-        duplex: 'half', // Explicitly set duplex option
+        duplex: 'half'
       });
 
     if (uploadError) {
@@ -134,7 +162,6 @@ export const actions = {
       return fail(500, { error: 'Failed to upload image' });
     }
 
-    // Update the product with the new image name
     const { error: updateError } = await supabase
       .from('products')
       .update({ image: imageName })
@@ -145,9 +172,6 @@ export const actions = {
       return fail(500, { error: 'Failed to update product image' });
     }
 
-    return {
-      success: true,
-      imageName,
-    };
-  },
+    return { success: true, imageName };
+  }
 };

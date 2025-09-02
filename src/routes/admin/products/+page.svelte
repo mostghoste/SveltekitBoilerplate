@@ -11,7 +11,9 @@
 	let page = 1;
 	let totalPages = 1;
 	const limit = 50;
-	const categories = data.categories || [];
+
+	// Nested category options from server: [{ id, label, depth, isLeaf }]
+	let categories = data.categoriesOptions || [];
 
 	// Search fields
 	let partNameSearch = '';
@@ -22,7 +24,7 @@
 			const from = (page - 1) * limit;
 			const to = from + limit - 1;
 
-			// Base query
+			// Base query (includes joined simple category name for display)
 			let query = supabase
 				.from('products')
 				.select(
@@ -102,33 +104,30 @@
 
 			if (error) throw new Error(error.message);
 
-			// Update the local state
+			// Update local state + success status
 			const productIndex = productsWithPrices.findIndex((p) => p.id === productId);
 			if (productIndex !== -1) {
 				productsWithPrices[productIndex][fieldName] = newValue;
 				productsWithPrices[productIndex].priceStatus[fieldName] = 'success';
-				productsWithPrices = [...productsWithPrices]; // Reassign to trigger reactivity
+				productsWithPrices = [...productsWithPrices];
 
-				// Check if the field updated is category_id
+				// If category changed, refresh the table (to update the joined category name)
 				if (fieldName === 'category_id') {
-					// Refresh the product list to reflect the category change
 					fetchProductsWithPrices(page);
 				} else {
-					// Reset status after 3 seconds for non-category changes
 					setTimeout(() => {
 						productsWithPrices[productIndex].priceStatus[fieldName] = '';
-						productsWithPrices = [...productsWithPrices]; // Reassign to trigger reactivity
+						productsWithPrices = [...productsWithPrices];
 					}, 3000);
 				}
 			}
 		} catch (error) {
 			console.error(`Error updating ${fieldName}:`, error);
 
-			// Set error status
 			const productIndex = productsWithPrices.findIndex((p) => p.id === productId);
 			if (productIndex !== -1) {
 				productsWithPrices[productIndex].priceStatus[fieldName] = 'error';
-				productsWithPrices = [...productsWithPrices]; // Reassign to trigger reactivity
+				productsWithPrices = [...productsWithPrices];
 			}
 		}
 	}
@@ -142,26 +141,21 @@
 
 			if (error) throw new Error(error.message);
 
-			// Set success status
 			const productIndex = productsWithPrices.findIndex((p) => p.id === productId);
 			if (productIndex !== -1) {
 				productsWithPrices[productIndex].priceStatus[groupId] = 'success';
-				productsWithPrices = [...productsWithPrices]; // Reassign to trigger reactivity
-
-				// Reset status after 3 seconds
+				productsWithPrices = [...productsWithPrices];
 				setTimeout(() => {
 					productsWithPrices[productIndex].priceStatus[groupId] = '';
-					productsWithPrices = [...productsWithPrices]; // Reassign to trigger reactivity
+					productsWithPrices = [...productsWithPrices];
 				}, 3000);
 			}
 		} catch (error) {
 			console.error('Error updating price:', error);
-
-			// Set error status
 			const productIndex = productsWithPrices.findIndex((p) => p.id === productId);
 			if (productIndex !== -1) {
 				productsWithPrices[productIndex].priceStatus[groupId] = 'error';
-				productsWithPrices = [...productsWithPrices]; // Reassign to trigger reactivity
+				productsWithPrices = [...productsWithPrices];
 			}
 		}
 	}
@@ -260,8 +254,11 @@
 				<label for="category_id">{m.category()} <span class="text-red-500">*</span></label>
 				<select class="input input-bordered" id="category_id" name="category_id" required>
 					<option value="" disabled selected>{m.select_category()}</option>
-					{#each categories as category}
-						<option value={category.id}>{category.category_name}</option>
+					{#each categories as cat}
+						<!-- visually indent by depth using em-spaces — keep all categories selectable -->
+						<option value={cat.id}>
+							{Array(cat.depth).fill(' ').join('')}{cat.label}
+						</option>
 					{/each}
 				</select>
 			</div>
@@ -304,7 +301,7 @@
 			<tr>
 				<th class="w-16">{m.product_id()}</th>
 				<th class="w-16">{m.image()}</th>
-				<th class="w-32">{m.category()}</th>
+				<th class="w-64">{m.category()}</th>
 				<th class="w-32">{m.part_name()}</th>
 				<th class="w-16 border-r-2 border-r-base-300">{m.part_code()}</th>
 			</tr>
@@ -341,13 +338,15 @@
 					</td>
 					<td>
 						<select
-							class="input input-bordered {getStatusClass(product.priceStatus['category_id'])}"
+							class="input input-bordered {getStatusClass(product.priceStatus['category_id'])} w-64"
 							bind:value={product.category_id}
 							on:change={(event) => updateField(product.id, 'category_id', event.target.value)}
 						>
 							<option value="" disabled>{m.select_category()}</option>
-							{#each categories as category}
-								<option value={category.id}>{category.category_name}</option>
+							{#each categories as cat}
+								<option value={cat.id}>
+									{Array(cat.depth).fill(' ').join('')}{cat.label}
+								</option>
 							{/each}
 						</select>
 					</td>
