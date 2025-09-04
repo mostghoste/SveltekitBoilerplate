@@ -5,169 +5,171 @@ import { SUPABASE_SERVICE_KEY } from '$env/static/private';
 
 /** @type {import('./$types').PageServerLoad} */
 export const load = async ({ locals }) => {
-  const supabase = locals.supabase;
+	const supabase = locals.supabase;
 
-  // Fetch profiles
-  const { data: profiles, error: profilesError } = await supabase
-    .from('profiles')
-    .select('id, email, first_name, last_name, company, customer_groups (group_name), role, account_status, phone_number')
-    .order('email', { ascending: true });
+	// Fetch profiles
+	const { data: profiles, error: profilesError } = await supabase
+		.from('profiles')
+		.select(
+			'id, email, first_name, last_name, company, customer_groups (group_name), role, account_status, phone_number'
+		)
+		.order('email', { ascending: true });
 
-  if (profilesError) {
-    console.error('Error fetching profiles:', profilesError);
-    return { users: [] };
-  }
+	if (profilesError) {
+		console.error('Error fetching profiles:', profilesError);
+		return { users: [] };
+	}
 
-  // Fetch customer groups
-  const { data: customerGroups, error: customerGroupsError } = await supabase
-    .from('customer_groups')
-    .select('*');
+	// Fetch customer groups
+	const { data: customerGroups, error: customerGroupsError } = await supabase
+		.from('customer_groups')
+		.select('*');
 
-  if (customerGroupsError) {
-    console.error('Error fetching customer groups:', customerGroupsError);
-    return { customerGroups: [] };
-  }
+	if (customerGroupsError) {
+		console.error('Error fetching customer groups:', customerGroupsError);
+		return { customerGroups: [] };
+	}
 
-  // Map profiles to the expected format
-  const usersWithProfiles = profiles.map(profile => ({
-    id: profile.id,
-    email: profile.email,
-    first_name: profile.first_name,
-    last_name: profile.last_name,
-    company: profile.company,
-    customer_group: profile.customer_groups.group_name,
-    role: profile.role,
-    status: profile.account_status,
-    phone_number: profile.phone_number
-  }));
+	// Map profiles to the expected format
+	const usersWithProfiles = profiles.map((profile) => ({
+		id: profile.id,
+		email: profile.email,
+		first_name: profile.first_name,
+		last_name: profile.last_name,
+		company: profile.company,
+		customer_group: profile.customer_groups.group_name,
+		role: profile.role,
+		status: profile.account_status,
+		phone_number: profile.phone_number
+	}));
 
-  return {
-    users: usersWithProfiles,
-    customerGroups,
-  };
+	return {
+		users: usersWithProfiles,
+		customerGroups
+	};
 };
 
 /** @type {import('./$types').Actions} */
 export const actions = {
-  invite: async ({ request, locals }) => {
-    console.log("Attempting to invite");
-    const data = await request.formData();
-    const email = data.get('email');
-    const first_name = data.get('first_name');
-    const last_name = data.get('last_name');
-    const company = data.get('company');
-    const phone = data.get('phone');
+	invite: async ({ request, locals }) => {
+		console.log('Attempting to invite');
+		const data = await request.formData();
+		const email = data.get('email');
+		const first_name = data.get('first_name');
+		const last_name = data.get('last_name');
+		const company = data.get('company');
+		const phone = data.get('phone');
 
-    if (!email) {
-      console.log("Error: No email provided");
-      return fail(400, { error: 'Email is required' });
-    }
+		if (!email) {
+			console.log('Error: No email provided');
+			return fail(400, { error: 'Email is required' });
+		}
 
-    const supabase = createClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    });
+		const supabase = createClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+			auth: {
+				autoRefreshToken: false,
+				persistSession: false
+			}
+		});
 
-    // Log the optional data
-    console.log("Optional data being passed:", {
-      first_name,
-      last_name,
-      company,
-      phone
-    });
+		// Log the optional data
+		console.log('Optional data being passed:', {
+			first_name,
+			last_name,
+			company,
+			phone
+		});
 
-    // Invite user with additional metadata
-    const { data: user, error } = await supabase.auth.admin.inviteUserByEmail(email, {
-      data: {
-        first_name,
-        last_name,
-        company,
-        phone_number: phone
-      }
-    });
+		// Invite user with additional metadata
+		const { data: user, error } = await supabase.auth.admin.inviteUserByEmail(email, {
+			data: {
+				first_name,
+				last_name,
+				company,
+				phone_number: phone
+			}
+		});
 
-    if (error) {
-      console.log("Error: " + error.message);
-      console.log(JSON.stringify(error));
-      return fail(500, { error: error.message });
-    } else {
-      console.log("User: " + JSON.stringify(user));
-    }
+		if (error) {
+			console.log('Error: ' + error.message);
+			console.log(JSON.stringify(error));
+			return fail(500, { error: error.message });
+		} else {
+			console.log('User: ' + JSON.stringify(user));
+		}
 
-    return { success: true };
-  },
+		return { success: true };
+	},
 
-  updateCustomerGroups: async ({ request, locals }) => {
-    const supabase = locals.supabase;
-    const formData = await request.formData();
-    const customerGroupId = formData.get('customer_group_id');
-    const userIds = formData.get('user_ids').split(',');
+	updateCustomerGroups: async ({ request, locals }) => {
+		const supabase = locals.supabase;
+		const formData = await request.formData();
+		const customerGroupId = formData.get('customer_group_id');
+		const userIds = formData.get('user_ids').split(',');
 
-    if (!customerGroupId || userIds.length === 0) {
-      return fail(400, { error: 'Customer group ID and user IDs are required' });
-    }
+		if (!customerGroupId || userIds.length === 0) {
+			return fail(400, { error: 'Customer group ID and user IDs are required' });
+		}
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({ customer_group_id: customerGroupId })
-      .in('id', userIds);
+		const { error } = await supabase
+			.from('profiles')
+			.update({ customer_group_id: customerGroupId })
+			.in('id', userIds);
 
-    if (error) {
-      console.error('Error updating customer groups:', error);
-      return fail(500, { error: 'Failed to update customer groups' });
-    }
+		if (error) {
+			console.error('Error updating customer groups:', error);
+			return fail(500, { error: 'Failed to update customer groups' });
+		}
 
-    return {
-      success: true,
-    };
-  },
+		return {
+			success: true
+		};
+	},
 
-  delete: async ({ request, locals }) => {
-    const data = await request.formData();
-    const userIds = data.get('user_ids');
+	delete: async ({ request, locals }) => {
+		const data = await request.formData();
+		const userIds = data.get('user_ids');
 
-    if (!userIds) {
-      return fail(400, { error: 'User IDs are required' });
-    }
+		if (!userIds) {
+			return fail(400, { error: 'User IDs are required' });
+		}
 
-    // Convert comma-separated string into an array
-    const userIdsArray = userIds.split(',');
+		// Convert comma-separated string into an array
+		const userIdsArray = userIds.split(',');
 
-    // Use the service key client for administrative actions
-    const supabase = createClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    });
+		// Use the service key client for administrative actions
+		const supabase = createClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+			auth: {
+				autoRefreshToken: false,
+				persistSession: false
+			}
+		});
 
-    // Delete related profiles first
-    const { error: profilesError } = await supabase
-      .from('profiles')
-      .delete()
-      .in('id', userIdsArray);
+		// Delete related profiles first
+		const { error: profilesError } = await supabase
+			.from('profiles')
+			.delete()
+			.in('id', userIdsArray);
 
-    if (profilesError) {
-      console.error('Error deleting profiles:', profilesError);
-      return fail(500, { error: 'Failed to delete profiles: ' + profilesError.message });
-    }
+		if (profilesError) {
+			console.error('Error deleting profiles:', profilesError);
+			return fail(500, { error: 'Failed to delete profiles: ' + profilesError.message });
+		}
 
-    // Delete users from the auth table
-    let authError = null;
-    for (const userId of userIdsArray) {
-      const { error } = await supabase.auth.admin.deleteUser(userId);
-      if (error) {
-        console.error(`Error deleting auth user ${userId}:`, error);
-        authError = error;
-      }
-    }
+		// Delete users from the auth table
+		let authError = null;
+		for (const userId of userIdsArray) {
+			const { error } = await supabase.auth.admin.deleteUser(userId);
+			if (error) {
+				console.error(`Error deleting auth user ${userId}:`, error);
+				authError = error;
+			}
+		}
 
-    if (authError) {
-      return fail(500, { error: 'Failed to delete one or more auth users: ' + authError.message });
-    }
+		if (authError) {
+			return fail(500, { error: 'Failed to delete one or more auth users: ' + authError.message });
+		}
 
-    return { success: true };
-  }
+		return { success: true };
+	}
 };

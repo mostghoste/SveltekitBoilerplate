@@ -131,6 +131,9 @@
 							<li>
 								<a href={i18n.resolveRoute('/admin/excel_upload')}>{m.excel_upload()}</a>
 							</li>
+							<li>
+								<a href={i18n.resolveRoute('/admin/export-products')}>Export products</a>
+							</li>
 						</ul>
 					</li>
 				{/if}
