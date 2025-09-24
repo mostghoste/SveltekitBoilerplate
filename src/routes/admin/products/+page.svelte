@@ -233,23 +233,54 @@
 		showDeleteModal = false;
 	}
 
-	function confirmDelete() {
-		if (productToDelete) {
-			console.log('Deleting product:', productToDelete);
-			// TODO: Implement actual delete functionality
-			// For now, simulate success
+	async function confirmDelete() {
+		if (!productToDelete) return;
+
+		try {
+			// Delete the product from the database
+			const { error } = await supabase
+				.from('products')
+				.delete()
+				.eq('id', productToDelete.id);
+
+			if (error) {
+				throw new Error(error.message);
+			}
+
+			// Success: Show success toast
 			showToast = true;
 			toastType = 'success';
 			toastMessage = m.product_deleted_success({
 				product_name: productToDelete.part_name,
 				product_id: productToDelete.id
 			});
+
+			// Close modal and refresh products list
 			closeDeleteModal();
+			fetchProductsWithPrices(page);
 
 			// Auto-hide toast after 5 seconds
 			setTimeout(() => {
 				showToast = false;
 			}, 5000);
+
+		} catch (error) {
+			console.error('Error deleting product:', error);
+
+			// Error: Show error toast
+			showToast = true;
+			toastType = 'error';
+			toastMessage = m.product_delete_error({
+				error_message: error.message || 'Unknown error occurred'
+			});
+
+			// Close modal but don't refresh list
+			closeDeleteModal();
+
+			// Auto-hide toast after 7 seconds (longer for error)
+			setTimeout(() => {
+				showToast = false;
+			}, 7000);
 		}
 	}
 
@@ -518,7 +549,7 @@
 <!-- Toast Notification -->
 {#if showToast}
 	<div class="fixed top-20 right-4 z-50 max-w-md">
-		<div class="alert alert-success shadow-lg bg-green-500 text-white border-green-600">
+		<div class="alert alert-{toastType} shadow-lg {toastType === 'success' ? 'bg-green-500 text-white border-green-600' : 'bg-red-500 text-white border-red-600'}">
 			<div class="flex items-center justify-between w-full">
 				<div class="flex items-center gap-2">
 					{#if toastType === 'success'}
