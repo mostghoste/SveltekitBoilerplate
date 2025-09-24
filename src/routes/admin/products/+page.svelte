@@ -12,6 +12,15 @@
 	let totalPages = 1;
 	const limit = 50;
 
+	// Delete modal state
+	let showDeleteModal = false;
+	let productToDelete = null;
+
+	// Toast notification state
+	let showToast = false;
+	let toastMessage = '';
+	let toastType = 'success'; // 'success' | 'error' | 'info'
+
 	// Nested category options from server: [{ id, label, depth, isLeaf }]
 	let categories = data.categoriesOptions || [];
 
@@ -208,6 +217,45 @@
 			}
 		}
 	}
+
+	function openDeleteModal(product) {
+		productToDelete = product;
+		showDeleteModal = true;
+	}
+
+	function getFullCategoryPath(categoryId) {
+		const category = categories.find((cat) => cat.id == categoryId);
+		return category ? category.label : 'N/A';
+	}
+
+	function closeDeleteModal() {
+		productToDelete = null;
+		showDeleteModal = false;
+	}
+
+	function confirmDelete() {
+		if (productToDelete) {
+			console.log('Deleting product:', productToDelete);
+			// TODO: Implement actual delete functionality
+			// For now, simulate success
+			showToast = true;
+			toastType = 'success';
+			toastMessage = m.product_deleted_success({
+				product_name: productToDelete.part_name,
+				product_id: productToDelete.id
+			});
+			closeDeleteModal();
+
+			// Auto-hide toast after 5 seconds
+			setTimeout(() => {
+				showToast = false;
+			}, 5000);
+		}
+	}
+
+	function closeToast() {
+		showToast = false;
+	}
 </script>
 
 <h1 class="font-bold">{m.product_management()}</h1>
@@ -309,7 +357,16 @@
 		<tbody>
 			{#each productsWithPrices as product}
 				<tr class="h-24">
-					<td>{product.id}</td>
+					<td class="relative group text-center">
+						<span class="group-hover:opacity-50">{product.id}</span>
+						<button
+							class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-500 text-white text-md rounded px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
+							on:click={() => openDeleteModal(product)}
+							title={m.delete_product()}
+						>
+							🗑️
+						</button>
+					</td>
 					<td class="relative">
 						<form
 							action="?/updateImage"
@@ -406,3 +463,83 @@
 
 <!-- Pagination Info and Controls (Bottom) -->
 <PaginationControl {page} {totalPages} {totalCount} {goToPage} />
+
+<!-- Delete Confirmation Modal -->
+{#if showDeleteModal && productToDelete}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+		<div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+			<h3 class="font-bold text-lg mb-4">{m.delete_product()}</h3>
+			<p class="mb-4">{m.confirm_delete_product()}</p>
+
+			<!-- Product Info Display -->
+			<div class="bg-gray-100 p-4 rounded mb-4">
+				<div class="flex gap-4">
+					<!-- Product Image -->
+					<div class="flex-shrink-0">
+						{#if productToDelete.image}
+							<img
+								src={`https://tlsgwucpdiwudwghrljn.supabase.co/storage/v1/object/public/product_images/${productToDelete.image}`}
+								alt={productToDelete.part_name}
+								class="w-48 h-48 object-contain rounded border"
+							/>
+						{:else}
+							<div
+								class="w-48 h-48 bg-gray-300 rounded border flex items-center justify-center text-base text-gray-500"
+							>
+								{m.no_image()}
+							</div>
+						{/if}
+					</div>
+					<!-- Product Details -->
+					<div class="flex-1">
+						<p><strong>{m.product_id()}:</strong> {productToDelete.id}</p>
+						<p><strong>{m.part_name()}:</strong> {productToDelete.part_name}</p>
+						<p><strong>{m.part_code()}:</strong> {productToDelete.part_code}</p>
+						<p>
+							<strong>{m.category()}:</strong>
+							{getFullCategoryPath(productToDelete.category_id)}
+						</p>
+					</div>
+				</div>
+			</div>
+
+			<div class="flex justify-end gap-2">
+				<button class="btn btn-ghost" on:click={closeDeleteModal}>
+					{m.cancel()}
+				</button>
+				<button class="btn btn-error" on:click={confirmDelete}>
+					{m.delete_product()}
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- Toast Notification -->
+{#if showToast}
+	<div class="fixed top-20 right-4 z-50 max-w-md">
+		<div class="alert alert-success shadow-lg bg-green-500 text-white border-green-600">
+			<div class="flex items-center justify-between w-full">
+				<div class="flex items-center gap-2">
+					{#if toastType === 'success'}
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+						</svg>
+					{:else if toastType === 'error'}
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+						</svg>
+					{:else}
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+						</svg>
+					{/if}
+					<span class="text-sm">{@html toastMessage}</span>
+				</div>
+				<button class="btn btn-sm btn-ghost" on:click={closeToast}>
+					✕
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
