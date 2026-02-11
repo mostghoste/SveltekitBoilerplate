@@ -126,7 +126,8 @@
 			}
 			// ─────────────────────────────────────────────────────────────────
 
-			if (searchTerm.length >= 2) {
+			const trimmedSearch = searchTerm.trim();
+		if (trimmedSearch.length >= 2) {
 				if (languageId) {
 					// translated name search
 					let translatedQuery = supabase
@@ -144,7 +145,7 @@
 						)
 						.eq('prices.customer_group_id', customerGroupId)
 						.eq('product_translations.language_id', languageId)
-						.ilike('product_translations.part_name', `%${searchTerm}%`)
+						.ilike('product_translations.part_name', `%${trimmedSearch}%`)
 						.range(0, 1000);
 
 					// part_code search
@@ -163,7 +164,7 @@
 						)
 						.eq('prices.customer_group_id', customerGroupId)
 						.eq('product_translations.language_id', languageId)
-						.ilike('part_code', `%${searchTerm}%`)
+						.ilike('part_code', `%${trimmedSearch}%`)
 						.range(0, 1000);
 
 					// ─ apply same category filter ─────────────────────────────
@@ -202,7 +203,7 @@
 					totalCount = uniqueData.length;
 				} else {
 					// English simple search
-					query = query.or(`part_name.ilike.%${searchTerm}%,part_code.ilike.%${searchTerm}%`);
+					query = query.or(`part_name.ilike.%${trimmedSearch}%,part_code.ilike.%${trimmedSearch}%`);
 
 					const { data: productData, count } = await query;
 					if (productData?.length > 0) {

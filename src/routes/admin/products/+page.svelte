@@ -51,11 +51,13 @@
 				.range(from, to);
 
 			// Apply conditional filters
-			if (partNameSearch) {
-				query = query.ilike('part_name', `%${partNameSearch}%`);
+			const trimmedName = partNameSearch.trim();
+			const trimmedCode = partCodeSearch.trim();
+			if (trimmedName) {
+				query = query.ilike('part_name', `%${trimmedName}%`);
 			}
-			if (partCodeSearch) {
-				query = query.ilike('part_code', `%${partCodeSearch}%`);
+			if (trimmedCode) {
+				query = query.ilike('part_code', `%${trimmedCode}%`);
 			}
 
 			// Fetch the filtered products
@@ -67,11 +69,11 @@
 			query = supabase.from('products').select('*', { count: 'exact', head: true });
 
 			// Reapply filters for the count query
-			if (partNameSearch) {
-				query = query.ilike('part_name', `%${partNameSearch}%`);
+			if (trimmedName) {
+				query = query.ilike('part_name', `%${trimmedName}%`);
 			}
-			if (partCodeSearch) {
-				query = query.ilike('part_code', `%${partCodeSearch}%`);
+			if (trimmedCode) {
+				query = query.ilike('part_code', `%${trimmedCode}%`);
 			}
 
 			const { count: totalCountResult, error: countError } = await query;
