@@ -108,6 +108,36 @@
 		if (status === 'error') return 'border-red-500';
 		return '';
 	}
+
+	// ─── Parent category reordering ──────────────────────────────────────
+	$: parentCategories = categories.filter((c) => c.parent_id === null);
+
+	async function swapSortOrder(index, direction) {
+		const targetIndex = index + direction;
+		if (targetIndex < 0 || targetIndex >= parentCategories.length) return;
+
+		const current = parentCategories[index];
+		const adjacent = parentCategories[targetIndex];
+
+		const currentOrder = current.sort_order ?? 0;
+		const adjacentOrder = adjacent.sort_order ?? 0;
+
+		// Swap sort_order values
+		const [{ error: err1 }, { error: err2 }] = await Promise.all([
+			supabase.from('categories').update({ sort_order: adjacentOrder }).eq('id', current.id),
+			supabase.from('categories').update({ sort_order: currentOrder }).eq('id', adjacent.id)
+		]);
+
+		if (err1 || err2) {
+			console.error('Error swapping sort order:', err1, err2);
+			return;
+		}
+
+		// Update local state
+		current.sort_order = adjacentOrder;
+		adjacent.sort_order = currentOrder;
+		categories = [...categories].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.id - b.id);
+	}
 </script>
 
 <h1 class="font-bold">{m.manage_categories()}</h1>
@@ -169,6 +199,40 @@
 				<td colspan={languages.length + 3}>{m.no_categories_available()}</td>
 			</tr>
 		{/if}
+	</tbody>
+</table>
+
+<!-- Parent category ordering -->
+<h2 class="font-bold mt-6">{m.parent_category_order?.() ?? 'Parent Category Order'}</h2>
+<table class="table w-96 mt-2">
+	<thead>
+		<tr>
+			<th>{m.category_name()}</th>
+			<th>{m.actions()}</th>
+		</tr>
+	</thead>
+	<tbody>
+		{#each parentCategories as parent, i}
+			<tr>
+				<td>{parent.category_name}</td>
+				<td class="flex gap-1">
+					<button
+						class="btn btn-sm btn-ghost"
+						disabled={i === 0}
+						on:click={() => swapSortOrder(i, -1)}
+					>
+						&#9650;
+					</button>
+					<button
+						class="btn btn-sm btn-ghost"
+						disabled={i === parentCategories.length - 1}
+						on:click={() => swapSortOrder(i, 1)}
+					>
+						&#9660;
+					</button>
+				</td>
+			</tr>
+		{/each}
 	</tbody>
 </table>
 

@@ -49,14 +49,15 @@ export async function load({ locals, depends }) {
 		// English: just pull the base names
 		const { data: rawCats, error: catErr } = await supabase
 			.from('categories')
-			.select('id, parent_id, category_name, id_alt');
+			.select('id, parent_id, category_name, id_alt, sort_order');
 		if (catErr) console.error('Error fetching categories:', catErr);
 
 		categories = (rawCats || []).map((c) => ({
 			id: c.id,
 			parent_id: c.parent_id,
 			name: c.category_name,
-			id_alt: c.id_alt
+			id_alt: c.id_alt,
+			sort_order: c.sort_order || 0
 		}));
 	} else {
 		// Non‑English: look up the language ID
@@ -71,14 +72,15 @@ export async function load({ locals, depends }) {
 			// fallback to English names
 			const { data: rawCats, error: catErr } = await supabase
 				.from('categories')
-				.select('id, parent_id, category_name, id_alt');
+				.select('id, parent_id, category_name, id_alt, sort_order');
 			if (catErr) console.error('Error fetching categories:', catErr);
 
 			categories = (rawCats || []).map((c) => ({
 				id: c.id,
 				parent_id: c.parent_id,
 				name: c.category_name,
-				id_alt: c.id_alt
+				id_alt: c.id_alt,
+				sort_order: c.sort_order || 0
 			}));
 		} else {
 			languageId = lang.id;
@@ -91,6 +93,7 @@ export async function load({ locals, depends }) {
           parent_id,
           id_alt,
           category_name,
+          sort_order,
           category_translations!left(language_id, category_name)
         `
 				)
@@ -102,7 +105,8 @@ export async function load({ locals, depends }) {
 				parent_id: c.parent_id,
 				// prefer translated name, otherwise base name
 				name: c.category_translations?.[0]?.category_name || c.category_name,
-				id_alt: c.id_alt
+				id_alt: c.id_alt,
+				sort_order: c.sort_order || 0
 			}));
 		}
 	}

@@ -25,7 +25,11 @@
 	let childrenMap = {};
 
 	$: if (categories && categories.length) {
-		parents = categories.filter((c) => !c.parent_id);
+		parents = categories.filter((c) => !c.parent_id).sort((a, b) => {
+			const orderDiff = (a.sort_order || 0) - (b.sort_order || 0);
+			if (orderDiff !== 0) return orderDiff;
+			return (a.name || '').localeCompare(b.name || '');
+		});
 		const map = {};
 		categories
 			.filter((c) => c.parent_id)

@@ -8,6 +8,7 @@ export const load = async ({ locals }) => {
 	const { data: categories, error: categoriesError } = await supabase
 		.from('categories')
 		.select('*')
+		.order('sort_order', { ascending: true })
 		.order('id', { ascending: true });
 
 	// Fetch languages
@@ -54,6 +55,28 @@ export const actions = {
 		return {
 			success: true
 		};
+	},
+	reorderCategory: async ({ request, locals }) => {
+		const supabase = locals.supabase;
+		const formData = await request.formData();
+		const categoryId = formData.get('category_id');
+		const newSortOrder = formData.get('sort_order');
+
+		if (!categoryId || newSortOrder === null) {
+			return fail(400, { error: 'Category ID and sort order are required' });
+		}
+
+		const { error } = await supabase
+			.from('categories')
+			.update({ sort_order: parseInt(newSortOrder) })
+			.eq('id', categoryId);
+
+		if (error) {
+			console.error('Error reordering category:', error);
+			return fail(500, { error: 'Failed to reorder category' });
+		}
+
+		return { success: true };
 	},
 	deleteCategory: async ({ request, locals }) => {
 		const supabase = locals.supabase;
