@@ -37,9 +37,11 @@
 				map[c.parent_id] = map[c.parent_id] || [];
 				map[c.parent_id].push(c);
 			});
-		// sort subcategories by alt id (fallback to empty string)
+		// sort subcategories by sort_order, then alt id (fallback to empty string)
 		Object.values(map).forEach((arr) => {
 			arr.sort((a, b) => {
+				const orderDiff = (a.sort_order || 0) - (b.sort_order || 0);
+				if (orderDiff !== 0) return orderDiff;
 				const aAlt = (a.id_alt || '').toString();
 				const bAlt = (b.id_alt || '').toString();
 				return aAlt.localeCompare(bAlt, undefined, { numeric: true, sensitivity: 'base' });
